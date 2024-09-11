@@ -8,10 +8,12 @@
 import SwiftUI
 
 @main
-struct DiscTrackerApp: App {
+struct DiscGolfApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            DiscCatalogView()
         }
     }
 }
+
+
