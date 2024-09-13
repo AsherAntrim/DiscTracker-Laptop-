@@ -45,6 +45,7 @@ struct AddDiscView: View {
                     viewModel.saveDiscs()
                     presentationMode.wrappedValue.dismiss()
                 }
+                .foregroundStyle(.white)
             }
             .navigationTitle("Add Disc")
         }

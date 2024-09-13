@@ -11,6 +11,15 @@ struct DiscCatalogView: View {
     @StateObject var viewModel = DiscCatalogViewModel()
     @State private var showAddDiscSheet = false
     @State private var sortType: SortType = .name
+    
+    init() {
+            let appearance = UINavigationBarAppearance()
+        appearance.titleTextAttributes = [.foregroundColor: UIColor.white]
+        appearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
+            
+            UINavigationBar.appearance().standardAppearance = appearance
+            UINavigationBar.appearance().compactAppearance = appearance
+        }
 
     var sortedDiscs: [Disc] {
         switch sortType {
@@ -39,7 +48,6 @@ struct DiscCatalogView: View {
 
                 List {
                     ForEach(sortedDiscs) { disc in
-                        // Add NavigationLink to navigate to detailed view when tapped
                         NavigationLink(destination: DiscDetailView(disc: disc)) {
                             HStack {
                                 if let imageData = disc.imageData, let uiImage = UIImage(data: imageData) {
@@ -62,7 +70,7 @@ struct DiscCatalogView: View {
                             }
                         }
                     }
-                    .onDelete(perform: deleteDisc) // Add this line to enable swipe-to-delete
+                    .onDelete(perform: deleteDisc)
                 }
                 .listStyle(InsetGroupedListStyle())
             }
@@ -71,14 +79,16 @@ struct DiscCatalogView: View {
                 showAddDiscSheet = true
             }, label: {
                 Image(systemName: "plus")
+                    .foregroundStyle(.white)
             }))
             .sheet(isPresented: $showAddDiscSheet, content: {
                 AddDiscView(viewModel: viewModel)
             })
-            .background(Color.white) // Apply custom background color
+            .background(Color.blue)
         }
         .onAppear {
             viewModel.loadDiscs()
+            
         }
     }
 
