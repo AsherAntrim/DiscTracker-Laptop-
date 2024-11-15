@@ -1,13 +1,7 @@
-//
-//  DiscDetailView.swift
-//  DiscTracker
-//
-//  Created by Asher Antrim on 9/11/24.
-//
 import SwiftUI
 
 struct DiscDetailView: View {
-    var disc: Disc
+    @Binding var disc: Disc
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -32,12 +26,11 @@ struct DiscDetailView: View {
             Text("Type: \(disc.type)")
             Text("Plastic: \(disc.plasticType)")
             Text("Condition: \(disc.condition)")
-            
-            if disc.lost {
-                Text("Status: Lost").foregroundColor(.red)
-            } else {
-                Text("Status: In Bag").foregroundColor(.green)
-            }
+
+            Toggle("Lost", isOn: $disc.lost)
+                .padding()
+                .background(Color.secondary.opacity(0.1))
+                .cornerRadius(8)
 
             Spacer()
         }
@@ -45,5 +38,3 @@ struct DiscDetailView: View {
         .navigationTitle("Disc Details")
     }
 }
-
-

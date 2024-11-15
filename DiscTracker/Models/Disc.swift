@@ -7,14 +7,19 @@
 import Foundation
 
 struct Disc: Identifiable, Codable {
-    var id = UUID()   // Unique identifier for each disc
-    var name: String  // Name of the disc
-    var type: String  // Type of disc (e.g., driver, mid-range, putter)
-    var plasticType: String  // Plastic type (e.g., Star, Champion, DX)
-    var condition: String    // Condition of the disc (e.g., new, used)
-    var lost: Bool = false   // Track if the disc is lost
+    var id = UUID()
+    var name: String
+    var type: String
+    var plasticType: String
+    var condition: String
+    var lost: Bool = false
     var traded: Bool = false
     var imageData: Data?
+}
 
+enum SortType: String, CaseIterable, Identifiable {
+    case name, type, plastic, condition, lost, traded
+    
+    var id: String { self.rawValue }
 }
 

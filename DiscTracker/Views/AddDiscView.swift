@@ -14,22 +14,44 @@ struct AddDiscView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Disc Info")) {
-                    TextField("Name", text: $name)
-                    TextField("Type", text: $type)
+                Section(header: Text("Disc Info").foregroundColor(.accentColor)) {
+                    TextField("Manufacture", text: $name)
+                        .padding(5)
+                        .background(Color(UIColor.systemGray6))
+                        .cornerRadius(8)
+
+                    TextField("Model", text: $type)
+                        .padding(5)
+                        .background(Color(UIColor.systemGray6))
+                        .cornerRadius(8)
+
                     TextField("Plastic Type", text: $plasticType)
+                        .padding(5)
+                        .background(Color(UIColor.systemGray6))
+                        .cornerRadius(8)
+
                     TextField("Condition", text: $condition)
+                        .padding(5)
+                        .background(Color(UIColor.systemGray6))
+                        .cornerRadius(8)
                 }
 
-                Section(header: Text("Image")) {
+                Section(header: Text("Image").foregroundColor(.accentColor)) {
                     if let image = selectedImage {
                         Image(uiImage: image)
                             .resizable()
                             .scaledToFit()
                             .frame(height: 150)
+                            .cornerRadius(8)
+                            .shadow(radius: 5)
                     } else {
-                        Button("Select Image") {
-                            showImagePicker = true
+                        Button(action: { showImagePicker = true }) {
+                            HStack {
+                                Image(systemName: "photo.on.rectangle")
+                                Text("Select Image")
+                            }
+                            .foregroundColor(.accentColor)
+                            .padding()
                         }
                     }
                 }
@@ -37,17 +59,27 @@ struct AddDiscView: View {
                     ImagePicker(selectedImage: $selectedImage)
                 }
 
-                Button("Add Disc") {
-                    // Save the image as Data
-                    let imageData = selectedImage?.jpegData(compressionQuality: 0.8)
-                    let newDisc = Disc(name: name, type: type, plasticType: plasticType, condition: condition, imageData: imageData)
-                    viewModel.discs.append(newDisc)
-                    viewModel.saveDiscs()
-                    presentationMode.wrappedValue.dismiss()
+                Button(action: addDisc) {
+                    Text("Add Disc")
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.accentColor)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
                 }
-                .foregroundStyle(.white)
             }
             .navigationTitle("Add Disc")
+            .navigationBarItems(leading: Button("Cancel") {
+                presentationMode.wrappedValue.dismiss()
+            })
         }
+    }
+    
+    private func addDisc() {
+        let imageData = selectedImage?.jpegData(compressionQuality: 0.8)
+        let newDisc = Disc(name: name, type: type, plasticType: plasticType, condition: condition, imageData: imageData)
+        viewModel.discs.append(newDisc)
+        viewModel.saveDiscs()
+        presentationMode.wrappedValue.dismiss()
     }
 }
