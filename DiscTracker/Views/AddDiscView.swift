@@ -36,28 +36,34 @@ struct AddDiscView: View {
                         .cornerRadius(8)
                 }
 
-                Section(header: Text("Image").foregroundColor(.accentColor)) {
-                    if let image = selectedImage {
-                        Image(uiImage: image)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(height: 150)
-                            .cornerRadius(8)
-                            .shadow(radius: 5)
-                    } else {
-                        Button(action: { showImagePicker = true }) {
-                            HStack {
-                                Image(systemName: "photo.on.rectangle")
-                                Text("Select Image")
-                            }
-                            .foregroundColor(.accentColor)
-                            .padding()
+                Section {
+                    VStack(spacing: 8) {
+                            if let selectedImage = selectedImage {
+                                Image(uiImage: selectedImage)
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 100, height: 100)
+                                    .clipShape(Circle())
+                                    .overlay(Circle().stroke(Color.blue, lineWidth: 2))
+                            } else {
+                                ZStack {
+                                    Circle()
+                                        .fill(Color.gray.opacity(0.3))
+                                        .frame(width: 100, height: 100)
+                                    Image(systemName: "camera.fill")
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 40, height: 40)
+                                        .foregroundColor(.blue)
+                                }
                         }
+                        Text("Add Photo")
+                            .font(.caption)
+                            .foregroundColor(.blue)
                     }
+                    .frame(maxWidth: .infinity)
                 }
-                .sheet(isPresented: $showImagePicker) {
-                    ImagePicker(selectedImage: $selectedImage)
-                }
+                .listRowBackground(Color.clear)
 
                 Button(action: addDisc) {
                     Text("Add Disc")
