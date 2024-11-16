@@ -4,8 +4,10 @@
 //
 //  Created by Asher Antrim on 9/11/24.
 //
+
 import Foundation
 
+/// Represents a disc in the catalog with its attributes.
 struct Disc: Identifiable, Codable {
     var id = UUID()
     var name: String
@@ -16,10 +18,3 @@ struct Disc: Identifiable, Codable {
     var traded: Bool = false
     var imageData: Data?
 }
-
-enum SortType: String, CaseIterable, Identifiable {
-    case name, type, plastic, condition, lost, traded
-    
-    var id: String { self.rawValue }
-}
-

@@ -1,40 +1,34 @@
+//
+//  DiscDetailView.swift
+//  DiscTracker
+//
+//  Created by Asher Antrim on 9/11/24.
+//
+
 import SwiftUI
 
+/// View displaying the details of a specific disc.
 struct DiscDetailView: View {
     @Binding var disc: Disc
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            if let imageData = disc.imageData, let uiImage = UIImage(data: imageData) {
-                Image(uiImage: uiImage)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(height: 200)
-                    .clipShape(Circle())
-            } else {
-                Image(systemName: "photo")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(height: 200)
-                    .clipShape(Circle())
+        Form {
+            Section(header: Text("Disc Information")) {
+                Text("Name: \(disc.name)")
+                Text("Type: \(disc.type)")
+                Text("Plastic Type: \(disc.plasticType)")
+                Text("Condition: \(disc.condition)")
             }
-
-            Text(disc.name)
-                .font(.largeTitle)
-                .bold()
-
-            Text("Type: \(disc.type)")
-            Text("Plastic: \(disc.plasticType)")
-            Text("Condition: \(disc.condition)")
-
-            Toggle("Lost", isOn: $disc.lost)
-                .padding()
-                .background(Color.secondary.opacity(0.1))
-                .cornerRadius(8)
-
-            Spacer()
+            Section {
+                Toggle("Lost", isOn: $disc.lost)
+                Toggle("Traded", isOn: $disc.traded)
+            }
+            // Additional UI for displaying the image can be added here
         }
-        .padding()
-        .navigationTitle("Disc Details")
+        .navigationBarTitle(disc.name, displayMode: .inline)
     }
+}
+
+#Preview {
+    DiscDetailView(disc: .constant(Disc(name: "Sample Disc", type: "Driver", plasticType: "Champion", condition: "New")))
 }

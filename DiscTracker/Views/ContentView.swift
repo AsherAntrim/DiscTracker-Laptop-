@@ -1,5 +1,5 @@
 //
-//  ContentView.swift
+//  DiscCatalogView.swift
 //  DiscTracker
 //
 //  Created by Asher Antrim on 9/11/24.
@@ -7,10 +7,10 @@
 
 import SwiftUI
 
+/// The main view displaying the catalog of discs.
 struct DiscCatalogView: View {
     @StateObject private var viewModel = DiscCatalogViewModel()
     @State private var showAddDiscSheet = false
-    @State private var sortType: SortType = .name
     @State private var searchText = ""
     
     init() {
@@ -35,29 +35,24 @@ struct DiscCatalogView: View {
         }
         .onAppear { viewModel.loadDiscs() }
     }
-
-    private var searchBar: some View {
-            TextField("Search discs", text: $searchText)
-                .padding(10)
-                .background(Color(.systemGray6))
-                .cornerRadius(8)
-                .padding(.horizontal)
-        }
     
+    /// The search bar for filtering discs.
+    private var searchBar: some View {
+        TextField("Search discs", text: $searchText)
+            .padding(10)
+            .background(Color(.systemGray6))
+            .cornerRadius(8)
+            .padding(.horizontal)
+    }
+    
+    /// The list displaying all filtered and sorted discs.
     private var discList: some View {
-        VStack() {
+        VStack {
             searchBar
             List {
-                ForEach(filteredDiscs, id: \.id) { disc in
+                ForEach(viewModel.getFilteredAndSortedDiscs(searchText: searchText), id: \.id) { disc in
                     NavigationLink(
-                        destination: DiscDetailView(disc: Binding(
-                            get: { viewModel.discs.first(where: { $0.id == disc.id }) ?? disc },
-                            set: { newValue in
-                                if let index = viewModel.discs.firstIndex(where: { $0.id == disc.id }) {
-                                    viewModel.discs[index] = newValue
-                                }
-                            }
-                        ))
+                        destination: DiscDetailView(disc: binding(for: disc))
                     ) {
                         VStack(alignment: .leading) {
                             Text(disc.name).font(.headline)
@@ -72,20 +67,19 @@ struct DiscCatalogView: View {
             .listStyle(InsetGroupedListStyle())
         }
     }
-
     
-    private var filteredDiscs: [Disc] {
-        if searchText.isEmpty {
-            return viewModel.discs
-        } else {
-            return viewModel.discs.filter { disc in
-                disc.name.localizedCaseInsensitiveContains(searchText) ||
-                disc.type.localizedCaseInsensitiveContains(searchText) ||
-                disc.plasticType.localizedCaseInsensitiveContains(searchText)
-            }
+    /// Provides a binding for the given disc to allow for data updates.
+    ///
+    /// - Parameter disc: The disc to create a binding for.
+    /// - Returns: A binding to the disc within the discs array.
+    private func binding(for disc: Disc) -> Binding<Disc> {
+        guard let discIndex = viewModel.discs.firstIndex(where: { $0.id == disc.id }) else {
+            fatalError("Disc not found in the array")
         }
+        return $viewModel.discs[discIndex]
     }
     
+    /// The button to add a new disc.
     private var addButton: some View {
         Button(action: { showAddDiscSheet.toggle() }) {
             Image(systemName: "plus")
@@ -93,11 +87,13 @@ struct DiscCatalogView: View {
         }
     }
     
+    /// Deletes a disc at the specified offsets.
+    ///
+    /// - Parameter offsets: The index set of discs to delete.
     private func deleteDisc(at offsets: IndexSet) {
         viewModel.removeDisc(at: offsets)
     }
 }
-
 
 #Preview {
     DiscCatalogView()
