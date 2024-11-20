@@ -6,13 +6,21 @@
 //
 
 import SwiftUI
+import FirebaseAuth
 
-/// The main view displaying the catalog of discs.
+/// The main view displaying the catalog of discs and account info.
 struct DiscCatalogView: View {
     @StateObject private var viewModel = DiscCatalogViewModel()
     @State private var showAddDiscSheet = false
     @State private var searchText = ""
-    
+    @State private var isUserAuthenticated = false // Track authentication status
+    @State private var authStateListenerHandle: AuthStateDidChangeListenerHandle? // Firebase auth listener
+
+    // DiscTracker-themed colors
+    let backgroundColor = Color(red: 34/255, green: 139/255, blue: 34/255) // Green for outdoors
+    let accentColor = Color(red: 60/255, green: 70/255, blue: 80/255) // Neutral accent
+    let highlightColor = Color(red: 255/255, green: 165/255, blue: 0/255) // Orange for highlights
+
     init() {
         let appearance = UINavigationBarAppearance()
         appearance.titleTextAttributes = [.foregroundColor: UIColor.white]
@@ -20,8 +28,41 @@ struct DiscCatalogView: View {
         UINavigationBar.appearance().standardAppearance = appearance
         UINavigationBar.appearance().compactAppearance = appearance
     }
-    
+
     var body: some View {
+        Group {
+            if isUserAuthenticated {
+                mainTabView
+            } else {
+                AuthView() // Show authentication view
+            }
+        }
+        .onAppear {
+            setupAuthListener()
+        }
+        .onDisappear {
+            removeAuthListener()
+        }
+    }
+
+    /// The tab view containing Disc Catalog and Account tabs.
+    private var mainTabView: some View {
+        TabView {
+            discCatalogTab
+                .tabItem {
+                    Label("Discs", systemImage: "tray.full")
+                }
+            
+            accountTab
+                .tabItem {
+                    Label("Account", systemImage: "person.circle")
+                }
+        }
+        .background(backgroundColor.edgesIgnoringSafeArea(.all)) // Themed background
+    }
+
+    /// The Disc Catalog tab.
+    private var discCatalogTab: some View {
         NavigationView {
             VStack {
                 discList
@@ -31,67 +72,100 @@ struct DiscCatalogView: View {
             .sheet(isPresented: $showAddDiscSheet) {
                 AddDiscView(viewModel: viewModel)
             }
-            .background(Color.blue)
+            .background(backgroundColor.edgesIgnoringSafeArea(.all)) // Green background
         }
         .onAppear { viewModel.loadDiscs() }
     }
-    
+
+    /// The Account tab.
+    private var accountTab: some View {
+        AccountView() // Reuses AccountView
+    }
+
     /// The search bar for filtering discs.
     private var searchBar: some View {
         TextField("Search discs", text: $searchText)
             .padding(10)
-            .background(Color(.systemGray6))
+            .background(accentColor.opacity(0.2)) // Neutral background for text input
             .cornerRadius(8)
             .padding(.horizontal)
     }
-    
-    /// The list displaying all filtered and sorted discs.
+
+    /// The list displaying all filtered discs.
     private var discList: some View {
         VStack {
             searchBar
             List {
-                ForEach(viewModel.getFilteredAndSortedDiscs(searchText: searchText), id: \.id) { disc in
+                ForEach(filteredDiscs, id: \.id) { disc in
                     NavigationLink(
                         destination: DiscDetailView(disc: binding(for: disc))
                     ) {
                         VStack(alignment: .leading) {
-                            Text(disc.name).font(.headline)
+                            Text(disc.name)
+                                .font(.headline)
+                                .foregroundColor(highlightColor) // Orange highlight for disc name
                             Text("\(disc.type) | \(disc.plasticType)")
                                 .font(.subheadline)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.white) // White text for details
                         }
                     }
                 }
                 .onDelete(perform: deleteDisc)
             }
             .listStyle(InsetGroupedListStyle())
+            .background(backgroundColor) // Green background for the list
         }
     }
-    
-    /// Provides a binding for the given disc to allow for data updates.
-    ///
-    /// - Parameter disc: The disc to create a binding for.
-    /// - Returns: A binding to the disc within the discs array.
+
     private func binding(for disc: Disc) -> Binding<Disc> {
         guard let discIndex = viewModel.discs.firstIndex(where: { $0.id == disc.id }) else {
             fatalError("Disc not found in the array")
         }
         return $viewModel.discs[discIndex]
     }
-    
+
+    /// The list of discs filtered based on the search text.
+    private var filteredDiscs: [Disc] {
+        if searchText.isEmpty {
+            return viewModel.discs
+        } else {
+            return viewModel.discs.filter { disc in
+                disc.name.localizedCaseInsensitiveContains(searchText) ||
+                disc.type.localizedCaseInsensitiveContains(searchText) ||
+                disc.plasticType.localizedCaseInsensitiveContains(searchText)
+            }
+        }
+    }
+
     /// The button to add a new disc.
     private var addButton: some View {
         Button(action: { showAddDiscSheet.toggle() }) {
             Image(systemName: "plus")
-                .foregroundStyle(.white)
+                .foregroundColor(.white)
+                .padding()
+                .background(highlightColor) // Orange background
+                .clipShape(Circle())
+                .shadow(radius: 5) // Adds depth to the button
         }
     }
-    
+
     /// Deletes a disc at the specified offsets.
-    ///
-    /// - Parameter offsets: The index set of discs to delete.
     private func deleteDisc(at offsets: IndexSet) {
         viewModel.removeDisc(at: offsets)
+    }
+
+    /// Set up Firebase authentication listener
+    private func setupAuthListener() {
+        authStateListenerHandle = Auth.auth().addStateDidChangeListener { _, user in
+            isUserAuthenticated = (user != nil)
+        }
+    }
+
+    /// Remove Firebase authentication listener
+    private func removeAuthListener() {
+        if let handle = authStateListenerHandle {
+            Auth.auth().removeStateDidChangeListener(handle)
+        }
     }
 }
 

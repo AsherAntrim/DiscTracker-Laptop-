@@ -5,6 +5,7 @@
 //  Created by Asher Antrim on 9/11/24.
 //
 
+
 import SwiftUI
 
 /// View displaying the details of a specific disc.
@@ -23,7 +24,6 @@ struct DiscDetailView: View {
                 Toggle("Lost", isOn: $disc.lost)
                 Toggle("Traded", isOn: $disc.traded)
             }
-            // Additional UI for displaying the image can be added here
         }
         .navigationBarTitle(disc.name, displayMode: .inline)
     }

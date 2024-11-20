@@ -1,10 +1,3 @@
-//
-//  AddDiscView.swift
-//  DiscTracker
-//
-//  Created by Asher Antrim on 9/11/24.
-//
-
 import SwiftUI
 
 /// View for adding a new disc to the catalog.
@@ -18,6 +11,16 @@ struct AddDiscView: View {
     @State private var condition: String = ""
     @State private var imageData: Data?
 
+    /// Custom initializer to inject the view model.
+    init(viewModel: DiscCatalogViewModel) {
+        self.viewModel = viewModel
+
+        let appearance = UINavigationBarAppearance()
+        appearance.titleTextAttributes = [.foregroundColor: UIColor.black]
+        UINavigationBar.appearance().standardAppearance = appearance
+        UINavigationBar.appearance().scrollEdgeAppearance = appearance
+    }
+    
     var body: some View {
         NavigationView {
             Form {
@@ -27,7 +30,6 @@ struct AddDiscView: View {
                     TextField("Plastic Type", text: $plasticType)
                     TextField("Condition", text: $condition)
                 }
-                // Additional UI for image selection can be added here
             }
             .navigationBarTitle("Add New Disc", displayMode: .inline)
             .navigationBarItems(leading: cancelButton, trailing: saveButton)

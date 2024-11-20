@@ -12,42 +12,42 @@ import SwiftUI
 class DiscCatalogViewModel: ObservableObject {
     @Published var discs: [Disc] = []
     @Published var sortType: SortType = .name
-    
+
     private let dataManager = DiscDataManager()
-    
+
     /// Adds a new disc to the catalog.
-    ///
-    /// - Parameters:
-    ///   - name: The name of the disc.
-    ///   - type: The type/category of the disc.
-    ///   - plasticType: The plastic type of the disc.
-    ///   - condition: The condition of the disc.
-    ///   - imageData: Optional image data for the disc.
     func addDisc(name: String, type: String, plasticType: String, condition: String, imageData: Data?) {
         let newDisc = Disc(name: name, type: type, plasticType: plasticType, condition: condition, imageData: imageData)
         discs.append(newDisc)
         dataManager.saveDiscs(discs)
     }
-    
+
     /// Removes a disc from the catalog at the specified offsets.
-    ///
-    /// - Parameter offsets: The index set of discs to remove.
     func removeDisc(at offsets: IndexSet) {
         discs.remove(atOffsets: offsets)
         dataManager.saveDiscs(discs)
     }
-    
+
     /// Loads the discs from the data manager.
     func loadDiscs() {
         discs = dataManager.loadDiscs()
     }
-    
-    /// Returns the discs filtered based on the search text and sorted based on the current sort type.
-    ///
-    /// - Parameter searchText: The text to filter discs by.
-    /// - Returns: An array of discs filtered and sorted.
-    func getFilteredAndSortedDiscs(searchText: String) -> [Disc] {
-        let filteredDiscs = dataManager.filterDiscs(discs, searchText: searchText)
-        return dataManager.sortDiscs(filteredDiscs, by: sortType)
+
+    /// Returns the discs sorted based on the current sort type.
+    var sortedDiscs: [Disc] {
+        switch sortType {
+        case .name:
+            return discs.sorted { $0.name < $1.name }
+        case .type:
+            return discs.sorted { $0.type < $1.type }
+        case .plastic:
+            return discs.sorted { $0.plasticType < $1.plasticType }
+        case .condition:
+            return discs.sorted { $0.condition < $1.condition }
+        case .lost:
+            return discs.filter { $0.lost }
+        case .traded:
+            return discs.filter { $0.traded }
+        }
     }
 }
