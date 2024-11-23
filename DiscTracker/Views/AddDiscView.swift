@@ -4,8 +4,9 @@ import SwiftUI
 struct AddDiscView: View {
     @Environment(\.presentationMode) var presentationMode
     @ObservedObject var discCatalogViewModel: DiscCatalogViewModel
+    @ObservedObject var userDiscViewModel: UserDiscViewModel
     @Binding var showAlert : Bool
-    
+
     @State private var name: String = ""
     @State private var type: String = ""
     @State private var plasticType: String = ""
@@ -13,8 +14,9 @@ struct AddDiscView: View {
     @State private var imageData: Data?
 
     /// Custom initializer to inject the view model.
-    init(viewModel: DiscCatalogViewModel, showAlert: Binding<Bool>) {
-        self.discCatalogViewModel = viewModel
+    init(discCatalogViewModel: DiscCatalogViewModel, userDiscViewModel: UserDiscViewModel, showAlert: Binding<Bool>) {
+        self.discCatalogViewModel = discCatalogViewModel
+        self.userDiscViewModel = userDiscViewModel
         self._showAlert = showAlert
         
         let appearance = UINavigationBarAppearance()
@@ -49,7 +51,7 @@ struct AddDiscView: View {
     private var saveButton: some View {
         Button("Save") {
             discCatalogViewModel.addDisc(name: name, type: type, plasticType: plasticType, condition: condition, imageData: imageData)
-            // will add points here for reward
+            userDiscViewModel.addDiscPoints(10)
             showAlert = true
             presentationMode.wrappedValue.dismiss()
         }
@@ -58,5 +60,5 @@ struct AddDiscView: View {
 }
 
 #Preview {
-    AddDiscView(viewModel: DiscCatalogViewModel(), showAlert: .constant(true))
+    AddDiscView(discCatalogViewModel: DiscCatalogViewModel(), userDiscViewModel: UserDiscViewModel(), showAlert: .constant(true))
 }

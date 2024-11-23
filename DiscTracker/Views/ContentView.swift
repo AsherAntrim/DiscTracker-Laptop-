@@ -80,7 +80,7 @@ struct DiscCatalogView: View {
             .navigationTitle("Disc Catalog")
             .navigationBarItems(trailing: addButton)
             .sheet(isPresented: $showAddDiscSheet) {
-                AddDiscView(viewModel: discCatalogViewModel, showAlert: $showAlert)
+                AddDiscView(discCatalogViewModel: discCatalogViewModel, userDiscViewModel: userDiscViewModel, showAlert: $showAlert)
             }
 
             .background(backgroundColor.edgesIgnoringSafeArea(.all)) // Green background
