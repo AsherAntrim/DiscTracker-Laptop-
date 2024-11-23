@@ -10,12 +10,15 @@ import FirebaseAuth
 
 /// The main view displaying the catalog of discs and account info.
 struct DiscCatalogView: View {
-    @StateObject private var viewModel = DiscCatalogViewModel()
+    @StateObject private var discCatalogViewModel = DiscCatalogViewModel()
+    @State private var userDiscViewModel = UserDiscViewModel()
     @State private var showAddDiscSheet = false
     @State private var searchText = ""
     @State private var isUserAuthenticated = false // Track authentication status
     @State private var authStateListenerHandle: AuthStateDidChangeListenerHandle? // Firebase auth listener
-
+    @State private var showAlert = false
+    @State private var discPoints = 0
+    
     // DiscTracker-themed colors
     let backgroundColor = Color(red: 34/255, green: 139/255, blue: 34/255) // Green for outdoors
     let accentColor = Color(red: 60/255, green: 70/255, blue: 80/255) // Neutral accent
@@ -43,6 +46,13 @@ struct DiscCatalogView: View {
         .onDisappear {
             removeAuthListener()
         }
+        .alert(isPresented: $showAlert) {
+            Alert(
+                title: Text("Success"),
+                message: Text("Your disc has been added to the catalog."),
+                dismissButton: .default(Text("OK"))
+            )
+        }
     }
 
     /// The tab view containing Disc Catalog and Account tabs.
@@ -53,7 +63,7 @@ struct DiscCatalogView: View {
                     Label("Discs", systemImage: "tray.full")
                 }
             
-            accountTab
+            AccountView(userDiscViewModel: userDiscViewModel)
                 .tabItem {
                     Label("Account", systemImage: "person.circle")
                 }
@@ -70,16 +80,23 @@ struct DiscCatalogView: View {
             .navigationTitle("Disc Catalog")
             .navigationBarItems(trailing: addButton)
             .sheet(isPresented: $showAddDiscSheet) {
-                AddDiscView(viewModel: viewModel)
+                AddDiscView(viewModel: discCatalogViewModel, showAlert: $showAlert)
             }
+
             .background(backgroundColor.edgesIgnoringSafeArea(.all)) // Green background
         }
-        .onAppear { viewModel.loadDiscs() }
+        .onAppear { discCatalogViewModel.loadDiscs() }
+    }
+    
+    private func loadDiscPoints() {
+        userDiscViewModel.loadUser { points in
+            self.discPoints = points
+        }
     }
 
     /// The Account tab.
     private var accountTab: some View {
-        AccountView() // Reuses AccountView
+        AccountView(userDiscViewModel: userDiscViewModel)
     }
 
     /// The search bar for filtering discs.
@@ -118,18 +135,18 @@ struct DiscCatalogView: View {
     }
 
     private func binding(for disc: Disc) -> Binding<Disc> {
-        guard let discIndex = viewModel.discs.firstIndex(where: { $0.id == disc.id }) else {
+        guard let discIndex = discCatalogViewModel.discs.firstIndex(where: { $0.id == disc.id }) else {
             fatalError("Disc not found in the array")
         }
-        return $viewModel.discs[discIndex]
+        return $discCatalogViewModel.discs[discIndex]
     }
 
     /// The list of discs filtered based on the search text.
     private var filteredDiscs: [Disc] {
         if searchText.isEmpty {
-            return viewModel.discs
+            return discCatalogViewModel.discs
         } else {
-            return viewModel.discs.filter { disc in
+            return discCatalogViewModel.discs.filter { disc in
                 disc.name.localizedCaseInsensitiveContains(searchText) ||
                 disc.type.localizedCaseInsensitiveContains(searchText) ||
                 disc.plasticType.localizedCaseInsensitiveContains(searchText)
@@ -151,7 +168,7 @@ struct DiscCatalogView: View {
 
     /// Deletes a disc at the specified offsets.
     private func deleteDisc(at offsets: IndexSet) {
-        viewModel.removeDisc(at: offsets)
+        discCatalogViewModel.removeDisc(at: offsets)
     }
 
     /// Set up Firebase authentication listener

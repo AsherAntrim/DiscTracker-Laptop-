@@ -3,8 +3,9 @@ import SwiftUI
 /// View for adding a new disc to the catalog.
 struct AddDiscView: View {
     @Environment(\.presentationMode) var presentationMode
-    @ObservedObject var viewModel: DiscCatalogViewModel
-
+    @ObservedObject var discCatalogViewModel: DiscCatalogViewModel
+    @Binding var showAlert : Bool
+    
     @State private var name: String = ""
     @State private var type: String = ""
     @State private var plasticType: String = ""
@@ -12,9 +13,10 @@ struct AddDiscView: View {
     @State private var imageData: Data?
 
     /// Custom initializer to inject the view model.
-    init(viewModel: DiscCatalogViewModel) {
-        self.viewModel = viewModel
-
+    init(viewModel: DiscCatalogViewModel, showAlert: Binding<Bool>) {
+        self.discCatalogViewModel = viewModel
+        self._showAlert = showAlert
+        
         let appearance = UINavigationBarAppearance()
         appearance.titleTextAttributes = [.foregroundColor: UIColor.black]
         UINavigationBar.appearance().standardAppearance = appearance
@@ -46,7 +48,9 @@ struct AddDiscView: View {
     /// The save button to add the new disc to the catalog.
     private var saveButton: some View {
         Button("Save") {
-            viewModel.addDisc(name: name, type: type, plasticType: plasticType, condition: condition, imageData: imageData)
+            discCatalogViewModel.addDisc(name: name, type: type, plasticType: plasticType, condition: condition, imageData: imageData)
+            // will add points here for reward
+            showAlert = true
             presentationMode.wrappedValue.dismiss()
         }
         .disabled(name.isEmpty || type.isEmpty || plasticType.isEmpty || condition.isEmpty)
@@ -54,5 +58,5 @@ struct AddDiscView: View {
 }
 
 #Preview {
-    AddDiscView(viewModel: DiscCatalogViewModel())
+    AddDiscView(viewModel: DiscCatalogViewModel(), showAlert: .constant(true))
 }

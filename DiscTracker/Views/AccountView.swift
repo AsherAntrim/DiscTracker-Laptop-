@@ -9,6 +9,7 @@ import SwiftUI
 import FirebaseAuth
 
 struct AccountView: View {
+    @ObservedObject var userDiscViewModel: UserDiscViewModel
     @State private var userEmail: String = ""
     @State private var isEmailVerified: Bool = false
 
@@ -25,6 +26,19 @@ struct AccountView: View {
                 .fontWeight(.bold)
                 .foregroundColor(highlightColor) // Highlight color for title
                 .padding(.top, 40)
+            
+            HStack {
+                Text("Disc Points:")
+                    .font(.title2)
+                    .foregroundColor(highlightColor)
+                Spacer()
+                Text("\(userDiscViewModel.discPoints)")
+                    .font(.title2)
+                    .foregroundColor(highlightColor)
+            }
+            .padding()
+            .background(accentColor.opacity(0.2))
+            .cornerRadius(10)
 
             // User Info Section
             VStack(alignment: .leading, spacing: 10) {
@@ -40,6 +54,38 @@ struct AccountView: View {
             .background(accentColor.opacity(0.2)) // Subtle background with neutral color
             .cornerRadius(10)
             .shadow(radius: 5)
+            
+            // Add Points Button
+            Button(action: {
+                userDiscViewModel.addDiscPoints(10)
+            }) {
+                Text("Add 10 Points")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(Color.blue)
+                    .cornerRadius(10)
+                    .shadow(radius: 5)
+            }
+            .padding()
+
+            // Remove Points Button
+            Button(action: {
+                userDiscViewModel.removeDiscPoints(5)
+            }) {
+                Text("Remove 5 Points")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(Color.orange)
+                    .cornerRadius(10)
+                    .shadow(radius: 5)
+            }
+            .padding()
+
+            Spacer()
 
             // Sign-Out Button
             Button(action: signOut) {
@@ -79,7 +125,6 @@ struct AccountView: View {
     private func signOut() {
         do {
             try Auth.auth().signOut()
-            // Handle post-sign-out actions, such as navigation
         } catch let signOutError as NSError {
             print("Error signing out: %@", signOutError)
         }
@@ -88,7 +133,7 @@ struct AccountView: View {
 
 struct AccountView_Previews: PreviewProvider {
     static var previews: some View {
-        AccountView()
+        let userDiscViewModel = UserDiscViewModel()
+        AccountView(userDiscViewModel: userDiscViewModel)
     }
 }
-
