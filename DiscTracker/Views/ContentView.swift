@@ -80,7 +80,7 @@ struct DiscCatalogView: View {
             .navigationTitle("Disc Catalog")
             .navigationBarItems(trailing: addButton)
             .sheet(isPresented: $showAddDiscSheet) {
-                AddDiscView(discCatalogViewModel: discCatalogViewModel, userDiscViewModel: userDiscViewModel, showAlert: $showAlert)
+                AddDiscView(discCatalogViewModel: discCatalogViewModel, showAlert: $showAlert)
             }
 
             .background(backgroundColor.edgesIgnoringSafeArea(.all)) // Green background
@@ -115,7 +115,7 @@ struct DiscCatalogView: View {
             List {
                 ForEach(filteredDiscs, id: \.id) { disc in
                     NavigationLink(
-                        destination: DiscDetailView(disc: binding(for: disc))
+                        destination: DiscDetailView(userDiscViewModel: userDiscViewModel, disc: binding(for: disc))
                     ) {
                         VStack(alignment: .leading) {
                             Text(disc.name)

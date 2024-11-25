@@ -54,38 +54,6 @@ struct AccountView: View {
             .background(accentColor.opacity(0.2)) // Subtle background with neutral color
             .cornerRadius(10)
             .shadow(radius: 5)
-            
-            // Add Points Button
-            Button(action: {
-                userDiscViewModel.addDiscPoints(10)
-            }) {
-                Text("Add 10 Points")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(Color.blue)
-                    .cornerRadius(10)
-                    .shadow(radius: 5)
-            }
-            .padding()
-
-            // Remove Points Button
-            Button(action: {
-                userDiscViewModel.removeDiscPoints(5)
-            }) {
-                Text("Remove 5 Points")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(Color.orange)
-                    .cornerRadius(10)
-                    .shadow(radius: 5)
-            }
-            .padding()
-
-            Spacer()
 
             // Sign-Out Button
             Button(action: signOut) {

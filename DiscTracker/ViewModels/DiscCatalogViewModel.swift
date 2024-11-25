@@ -14,12 +14,20 @@ class DiscCatalogViewModel: ObservableObject {
     @Published var sortType: SortType = .name
 
     private let dataManager = DiscDataManager()
+    private let userDiscViewModel = UserDiscViewModel()
 
+    /// Initializes the catalog view model with a reference to the user disc view model.
+    init() {
+        loadDiscs()
+    }
+    
     /// Adds a new disc to the catalog.
     func addDisc(name: String, type: String, plasticType: String, condition: String, imageData: Data?) {
         let newDisc = Disc(name: name, type: type, plasticType: plasticType, condition: condition, imageData: imageData)
         discs.append(newDisc)
         dataManager.saveDiscs(discs)
+        
+        userDiscViewModel.handleDiscAddition(currentDiscCount: discs.count)
     }
 
     /// Removes a disc from the catalog at the specified offsets.

@@ -10,6 +10,7 @@ import SwiftUI
 
 /// View displaying the details of a specific disc.
 struct DiscDetailView: View {
+    @ObservedObject var userDiscViewModel: UserDiscViewModel
     @Binding var disc: Disc
 
     var body: some View {
@@ -22,7 +23,18 @@ struct DiscDetailView: View {
             }
             Section {
                 Toggle("Lost", isOn: $disc.lost)
+                    .onChange(of: disc.lost) { oldValue, newValue in
+                        if newValue {
+                            userDiscViewModel.removeDiscPoints(5)
+                        }
+                    }
+
                 Toggle("Traded", isOn: $disc.traded)
+                    .onChange(of: disc.traded) { oldValue, newValue in
+                        if newValue {
+                            userDiscViewModel.removeDiscPoints(5)
+                        }
+                    }
             }
         }
         .navigationBarTitle(disc.name, displayMode: .inline)
@@ -30,5 +42,5 @@ struct DiscDetailView: View {
 }
 
 #Preview {
-    DiscDetailView(disc: .constant(Disc(name: "Sample Disc", type: "Driver", plasticType: "Champion", condition: "New")))
+    DiscDetailView(userDiscViewModel: UserDiscViewModel(), disc: .constant(Disc(name: "Sample Disc", type: "Driver", plasticType: "Champion", condition: "New")))
 }
