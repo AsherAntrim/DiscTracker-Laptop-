@@ -174,13 +174,13 @@ struct DiscCatalogView: View {
 
     /// Set up Firebase authentication listener
     private func setupAuthListener() {
-            authStateListenerHandle = Auth.auth().addStateDidChangeListener { _, user in
-                isUserAuthenticated = (user != nil)
-                if isUserAuthenticated {
-                    viewModel.loadDiscs()
-                }
+        authStateListenerHandle = Auth.auth().addStateDidChangeListener { _, user in
+            isUserAuthenticated = (user != nil)
+            if isUserAuthenticated {
+                discCatalogViewModel.loadDiscs()
             }
         }
+    }
 
     /// Remove Firebase authentication listener
     private func removeAuthListener() {

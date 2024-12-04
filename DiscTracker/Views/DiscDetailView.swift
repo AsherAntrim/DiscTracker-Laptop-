@@ -40,7 +40,3 @@ struct DiscDetailView: View {
         .navigationBarTitle(disc.name, displayMode: .inline)
     }
 }
-
-#Preview {
-    DiscDetailView(userDiscViewModel: UserDiscViewModel(), disc: .constant(Disc(name: "Sample Disc", type: "Driver", plasticType: "Champion", condition: "New")))
-}
