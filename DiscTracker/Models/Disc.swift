@@ -6,6 +6,8 @@
 //
 
 import Foundation
+import FirebaseFirestore
+
 
 /// Represents a disc in the catalog with its attributes.
 struct Disc: Identifiable, Codable {

@@ -7,6 +7,8 @@
 
 import SwiftUI
 import Firebase
+import FirebaseFirestore
+
 
 @main
 struct DiscGolfApp: App {

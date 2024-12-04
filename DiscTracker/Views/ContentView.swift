@@ -7,6 +7,7 @@
 
 import SwiftUI
 import FirebaseAuth
+import FirebaseFirestore
 
 /// The main view displaying the catalog of discs and account info.
 struct DiscCatalogView: View {
@@ -14,8 +15,8 @@ struct DiscCatalogView: View {
     @State private var userDiscViewModel = UserDiscViewModel()
     @State private var showAddDiscSheet = false
     @State private var searchText = ""
-    @State private var isUserAuthenticated = false // Track authentication status
-    @State private var authStateListenerHandle: AuthStateDidChangeListenerHandle? // Firebase auth listener
+    @State private var isUserAuthenticated = false
+    @State private var authStateListenerHandle: AuthStateDidChangeListenerHandle?
     @State private var showAlert = false
     @State private var discPoints = 0
     
@@ -37,7 +38,7 @@ struct DiscCatalogView: View {
             if isUserAuthenticated {
                 mainTabView
             } else {
-                AuthView() // Show authentication view
+                AuthView()
             }
         }
         .onAppear {
@@ -68,7 +69,7 @@ struct DiscCatalogView: View {
                     Label("Account", systemImage: "person.circle")
                 }
         }
-        .background(backgroundColor.edgesIgnoringSafeArea(.all)) // Themed background
+        .background(backgroundColor.edgesIgnoringSafeArea(.all))
     }
 
     /// The Disc Catalog tab.
@@ -173,10 +174,13 @@ struct DiscCatalogView: View {
 
     /// Set up Firebase authentication listener
     private func setupAuthListener() {
-        authStateListenerHandle = Auth.auth().addStateDidChangeListener { _, user in
-            isUserAuthenticated = (user != nil)
+            authStateListenerHandle = Auth.auth().addStateDidChangeListener { _, user in
+                isUserAuthenticated = (user != nil)
+                if isUserAuthenticated {
+                    viewModel.loadDiscs()
+                }
+            }
         }
-    }
 
     /// Remove Firebase authentication listener
     private func removeAuthListener() {

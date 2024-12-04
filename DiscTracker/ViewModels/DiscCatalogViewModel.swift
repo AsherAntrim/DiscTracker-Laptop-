@@ -7,12 +7,12 @@
 
 import Foundation
 import SwiftUI
+import FirebaseFirestore
+import FirebaseAuth
 
-/// ViewModel that manages the disc catalog data and provides it to the views.
 class DiscCatalogViewModel: ObservableObject {
     @Published var discs: [Disc] = []
     @Published var sortType: SortType = .name
-
     private let dataManager = DiscDataManager()
     private let userDiscViewModel = UserDiscViewModel()
 
@@ -23,22 +23,28 @@ class DiscCatalogViewModel: ObservableObject {
     
     /// Adds a new disc to the catalog.
     func addDisc(name: String, type: String, plasticType: String, condition: String, imageData: Data?) {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
         let newDisc = Disc(name: name, type: type, plasticType: plasticType, condition: condition, imageData: imageData)
         discs.append(newDisc)
-        dataManager.saveDiscs(discs)
-        
         userDiscViewModel.handleDiscAddition(currentDiscCount: discs.count)
+        dataManager.saveDiscs(discs, userId: userId)
     }
 
     /// Removes a disc from the catalog at the specified offsets.
     func removeDisc(at offsets: IndexSet) {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
         discs.remove(atOffsets: offsets)
-        dataManager.saveDiscs(discs)
+        dataManager.saveDiscs(discs, userId: userId)
     }
 
-    /// Loads the discs from the data manager.
+    /// Loads the discs for the authenticated user.
     func loadDiscs() {
-        discs = dataManager.loadDiscs()
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+        dataManager.loadDiscs(userId: userId) { [weak self] loadedDiscs in
+            DispatchQueue.main.async {
+                self?.discs = loadedDiscs
+            }
+        }
     }
 
     /// Returns the discs sorted based on the current sort type.

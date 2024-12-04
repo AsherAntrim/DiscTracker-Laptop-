@@ -8,17 +8,17 @@ struct AuthView: View {
     @State private var errorMessage: String = ""
 
     // Updated theme colors for DiscTracker
-    let primaryColor = Color(red: 34/255, green: 139/255, blue: 34/255) // Green
-    let accentColor = Color(red: 255/255, green: 140/255, blue: 0/255) // Orange
+    let primaryColor = Color(red: 34/255, green: 139/255, blue: 34/255)
+    let accentColor = Color(red: 255/255, green: 140/255, blue: 0/255)
 
     var body: some View {
         ZStack {
             // Primary background
             primaryColor
-                .edgesIgnoringSafeArea(.all) // Ensures the background covers the entire screen
+                .edgesIgnoringSafeArea(.all)
 
             VStack(spacing: 20) {
-                Spacer() // Push content towards the center
+                Spacer()
 
                 // Heading
                 Text(isSignUp ? "Create an Account" : "Welcome Back")
@@ -64,7 +64,7 @@ struct AuthView: View {
                 }
                 .padding(.horizontal)
 
-                // Toggle between Sign Up and Sign In
+                // Toggle between Sign In and Sign Up
                 Button(action: {
                     isSignUp.toggle()
                 }) {
@@ -72,22 +72,9 @@ struct AuthView: View {
                         .font(.footnote)
                         .foregroundColor(.white)
                 }
-
-                // Resend email verification
-                if !isSignUp {
-                    Button(action: {
-                        sendEmailVerification()
-                    }) {
-                        Text("Resend Verification Email")
-                            .font(.footnote)
-                            .foregroundColor(.white)
-                            .underline()
-                    }
-                }
-
-                Spacer() // Push content towards the center
+                Spacer()
             }
-            .padding() // Adds padding to the content
+            .padding()
         }
     }
 
@@ -110,21 +97,6 @@ struct AuthView: View {
         Auth.auth().createUser(withEmail: email, password: password) { authResult, error in
             if let error = error {
                 errorMessage = error.localizedDescription
-            } else {
-                errorMessage = ""
-                sendEmailVerification()
-            }
-        }
-    }
-
-    private func sendEmailVerification() {
-        if let user = Auth.auth().currentUser {
-            user.sendEmailVerification { error in
-                if let error = error {
-                    errorMessage = "Failed to send verification email: \(error.localizedDescription)"
-                } else {
-                    errorMessage = "Verification email sent. Please check your inbox."
-                }
             }
         }
     }
