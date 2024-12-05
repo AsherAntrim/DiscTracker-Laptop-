@@ -15,7 +15,7 @@ struct CustomTextField: View {
             .padding(14)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.white)
+                    .fill(Color.gray)
             )
             .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
             .foregroundColor(.black)
