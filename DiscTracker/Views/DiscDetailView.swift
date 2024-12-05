@@ -7,10 +7,12 @@
 
 
 import SwiftUI
+import FirebaseAuth
 
 /// View displaying the details of a specific disc.
 struct DiscDetailView: View {
     @ObservedObject var userDiscViewModel: UserDiscViewModel
+    @ObservedObject var discCatalogViewModel: DiscCatalogViewModel
     @Binding var disc: Disc
 
     var body: some View {
@@ -22,19 +24,23 @@ struct DiscDetailView: View {
                 Text("Condition: \(disc.condition)")
             }
             Section {
-                Toggle("Lost", isOn: $disc.lost)
-                    .onChange(of: disc.lost) { oldValue, newValue in
-                        if newValue {
-                            userDiscViewModel.removeDiscPoints(5)
-                        }
+                Toggle("Mark as Lost", isOn: Binding(
+                    get: { disc.lost },
+                    set: { newValue in
+                        disc.lost = newValue
+                        discCatalogViewModel.updateDiscStatus(disc: disc, userId: Auth.auth().currentUser?.uid ?? "")
                     }
+                ))
+                .toggleStyle(SwitchToggleStyle())
 
-                Toggle("Traded", isOn: $disc.traded)
-                    .onChange(of: disc.traded) { oldValue, newValue in
-                        if newValue {
-                            userDiscViewModel.removeDiscPoints(5)
-                        }
+                Toggle("Mark as Traded", isOn: Binding(
+                    get: { disc.traded },
+                    set: { newValue in
+                        disc.traded = newValue
+                        discCatalogViewModel.updateDiscStatus(disc: disc, userId: Auth.auth().currentUser?.uid ?? "")
                     }
+                ))
+                .toggleStyle(SwitchToggleStyle())
             }
         }
         .navigationBarTitle(disc.name, displayMode: .inline)

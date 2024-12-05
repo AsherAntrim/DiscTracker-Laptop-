@@ -34,7 +34,7 @@ class DiscCatalogViewModel: ObservableObject {
 
     private func saveDiscToFirestore(disc: Disc, userId: String) {
         let userDiscsRef = db.collection("users").document(userId).collection("discs")
-        
+
         do {
             let encodedDisc = try JSONEncoder().encode(disc)
             if let jsonData = try JSONSerialization.jsonObject(with: encodedDisc) as? [String: Any] {
@@ -84,6 +84,23 @@ class DiscCatalogViewModel: ObservableObject {
             deleteDiscFromFirestore(disc: disc, userId: userId)
         }
         discs.remove(atOffsets: offsets)
+    }
+    
+    func updateDiscStatus(disc: Disc, userId: String) {
+        let userDiscsRef = db.collection("users").document(userId).collection("discs")
+        
+        let updatedData: [String: Any] = [
+            "lost": disc.lost,
+            "traded": disc.traded
+        ]
+        
+        userDiscsRef.document(disc.id.uuidString).updateData(updatedData) { error in
+            if let error = error {
+                print("Error updating disc status in Firestore: \(error.localizedDescription)")
+            } else {
+                print("Disc status successfully updated in Firestore.")
+            }
+        }
     }
 
     private func deleteDiscFromFirestore(disc: Disc, userId: String) {

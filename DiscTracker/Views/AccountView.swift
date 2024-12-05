@@ -14,17 +14,17 @@ struct AccountView: View {
     @State private var isEmailVerified: Bool = false
 
     // DiscTracker-themed colors
-    let backgroundColor = Color(red: 34/255, green: 139/255, blue: 34/255) // Green - representing outdoors
-    let accentColor = Color(red: 60/255, green: 70/255, blue: 80/255) // Neutral accent color
-    let highlightColor = Color(red: 255/255, green: 223/255, blue: 0/255) // Yellow for highlights
-
+    let backgroundColor = Color(red: 34/255, green: 139/255, blue: 34/255)
+    let accentColor = Color(red: 60/255, green: 70/255, blue: 80/255)
+    let highlightColor = Color(red: 255/255, green: 223/255, blue: 0/255)
+    
     var body: some View {
         VStack(spacing: 20) {
             // Header
             Text("Account Details")
                 .font(.largeTitle)
                 .fontWeight(.bold)
-                .foregroundColor(highlightColor) // Highlight color for title
+                .foregroundColor(highlightColor)
                 .padding(.top, 40)
             
             HStack {
@@ -44,14 +44,14 @@ struct AccountView: View {
             VStack(alignment: .leading, spacing: 10) {
                 Text("Email: \(userEmail)")
                     .font(.headline)
-                    .foregroundColor(accentColor) // Accent color for text
+                    .foregroundColor(accentColor)
 
                 Text("Email Verified: \(isEmailVerified ? "Yes" : "No")")
                     .font(.subheadline)
-                    .foregroundColor(isEmailVerified ? .green : .red) // Green or red depending on verification
+                    .foregroundColor(isEmailVerified ? .green : .red)
             }
             .padding()
-            .background(accentColor.opacity(0.2)) // Subtle background with neutral color
+            .background(accentColor.opacity(0.2))
             .cornerRadius(10)
             .shadow(radius: 5)
 
@@ -80,7 +80,7 @@ struct AccountView: View {
             loadUserDetails()
         }
         .padding()
-        .background(backgroundColor.edgesIgnoringSafeArea(.all)) // Themed green background
+        .background(backgroundColor.edgesIgnoringSafeArea(.all))
     }
 
     private func loadUserDetails() {

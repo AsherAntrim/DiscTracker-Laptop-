@@ -21,9 +21,9 @@ struct DiscCatalogView: View {
     @State private var discPoints = 0
     
     // DiscTracker-themed colors
-    let backgroundColor = Color(red: 34/255, green: 139/255, blue: 34/255) // Green for outdoors
-    let accentColor = Color(red: 60/255, green: 70/255, blue: 80/255) // Neutral accent
-    let highlightColor = Color(red: 255/255, green: 165/255, blue: 0/255) // Orange for highlights
+    let backgroundColor = Color(red: 34/255, green: 139/255, blue: 34/255)
+    let accentColor = Color(red: 60/255, green: 70/255, blue: 80/255)
+    let highlightColor = Color(red: 255/255, green: 165/255, blue: 0/255)
 
     init() {
         let appearance = UINavigationBarAppearance()
@@ -84,7 +84,7 @@ struct DiscCatalogView: View {
                 AddDiscView(discCatalogViewModel: discCatalogViewModel, showAlert: $showAlert)
             }
 
-            .background(backgroundColor.edgesIgnoringSafeArea(.all)) // Green background
+            .background(backgroundColor.edgesIgnoringSafeArea(.all))
         }
         .onAppear { discCatalogViewModel.loadDiscs() }
     }
@@ -104,7 +104,7 @@ struct DiscCatalogView: View {
     private var searchBar: some View {
         TextField("Search discs", text: $searchText)
             .padding(10)
-            .background(accentColor.opacity(0.2)) // Neutral background for text input
+            .background(accentColor.opacity(0.2))
             .cornerRadius(8)
             .padding(.horizontal)
     }
@@ -116,22 +116,26 @@ struct DiscCatalogView: View {
             List {
                 ForEach(filteredDiscs, id: \.id) { disc in
                     NavigationLink(
-                        destination: DiscDetailView(userDiscViewModel: userDiscViewModel, disc: binding(for: disc))
+                        destination: DiscDetailView(
+                            userDiscViewModel: userDiscViewModel,
+                            discCatalogViewModel: discCatalogViewModel,
+                            disc: binding(for: disc)
+                        )
                     ) {
                         VStack(alignment: .leading) {
                             Text(disc.name)
                                 .font(.headline)
-                                .foregroundColor(highlightColor) // Orange highlight for disc name
+                                .foregroundColor(highlightColor)
                             Text("\(disc.type) | \(disc.plasticType)")
                                 .font(.subheadline)
-                                .foregroundColor(.white) // White text for details
+                                .foregroundColor(highlightColor)
                         }
                     }
                 }
                 .onDelete(perform: deleteDisc)
             }
             .listStyle(InsetGroupedListStyle())
-            .background(backgroundColor) // Green background for the list
+            .background(backgroundColor)
         }
     }
 
