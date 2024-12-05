@@ -1,6 +1,27 @@
 import SwiftUI
 import FirebaseAuth
 
+struct CustomSecureField: View {
+    var placeholder: String
+    @Binding var text: String
+
+    init(_ placeholder: String, text: Binding<String>) {
+        self.placeholder = placeholder
+        self._text = text
+    }
+
+    var body: some View {
+        SecureField(placeholder, text: $text)
+            .padding(14)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.gray)
+            )
+            .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+            .foregroundColor(.black)
+    }
+}
+
 struct AuthView: View {
     @State private var email: String = ""
     @State private var password: String = ""
@@ -23,7 +44,7 @@ struct AuthView: View {
                     .foregroundColor(Theme.primaryTextColor)
 
                 // Email input
-                TextField("Email", text: $email)
+                CustomTextField("Email", text: $email)
                     .keyboardType(.emailAddress)
                     .autocapitalization(.none)
                     .padding()
@@ -32,7 +53,7 @@ struct AuthView: View {
                     .shadow(radius: 5)
 
                 // Password input
-                SecureField("Password", text: $password)
+                CustomSecureField("Password", text: $password)
                     .padding()
                     .background(Color.white.opacity(0.9))
                     .cornerRadius(10)
