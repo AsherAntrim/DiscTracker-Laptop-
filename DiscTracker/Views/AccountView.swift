@@ -13,45 +13,40 @@ struct AccountView: View {
     @State private var userEmail: String = ""
     @State private var isEmailVerified: Bool = false
 
-    // DiscTracker-themed colors
-    let backgroundColor = Color(red: 34/255, green: 139/255, blue: 34/255)
-    let accentColor = Color(red: 60/255, green: 70/255, blue: 80/255)
-    let highlightColor = Color(red: 255/255, green: 223/255, blue: 0/255)
-    
     var body: some View {
         VStack(spacing: 20) {
             // Header
             Text("Account Details")
                 .font(.largeTitle)
                 .fontWeight(.bold)
-                .foregroundColor(highlightColor)
+                .foregroundColor(Theme.primaryTextColor)
                 .padding(.top, 40)
-            
+
             HStack {
                 Text("Disc Points:")
                     .font(.title2)
-                    .foregroundColor(highlightColor)
+                    .foregroundColor(Theme.highlightColor)
                 Spacer()
                 Text("\(userDiscViewModel.discPoints)")
                     .font(.title2)
-                    .foregroundColor(highlightColor)
+                    .foregroundColor(Theme.highlightColor)
             }
             .padding()
-            .background(accentColor.opacity(0.2))
+            .background(Theme.accentColor.opacity(0.2))
             .cornerRadius(10)
 
             // User Info Section
             VStack(alignment: .leading, spacing: 10) {
                 Text("Email: \(userEmail)")
                     .font(.headline)
-                    .foregroundColor(accentColor)
+                    .foregroundColor(Theme.primaryTextColor)
 
                 Text("Email Verified: \(isEmailVerified ? "Yes" : "No")")
                     .font(.subheadline)
                     .foregroundColor(isEmailVerified ? .green : .red)
             }
             .padding()
-            .background(accentColor.opacity(0.2))
+            .background(Theme.accentColor.opacity(0.2))
             .cornerRadius(10)
             .shadow(radius: 5)
 
@@ -73,14 +68,14 @@ struct AccountView: View {
             // Footer with branding or app message
             Text("DiscTracker - Manage Your Game, Anytime.")
                 .font(.footnote)
-                .foregroundColor(accentColor)
+                .foregroundColor(Theme.secondaryTextColor)
                 .padding(.bottom, 20)
         }
         .onAppear {
             loadUserDetails()
         }
         .padding()
-        .background(backgroundColor.edgesIgnoringSafeArea(.all))
+        .background(Theme.backgroundColor.edgesIgnoringSafeArea(.all))
     }
 
     private func loadUserDetails() {

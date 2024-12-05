@@ -7,14 +7,10 @@ struct AuthView: View {
     @State private var isSignUp: Bool = false
     @State private var errorMessage: String = ""
 
-    // Updated theme colors for DiscTracker
-    let primaryColor = Color(red: 34/255, green: 139/255, blue: 34/255)
-    let accentColor = Color(red: 255/255, green: 140/255, blue: 0/255)
-
     var body: some View {
         ZStack {
             // Primary background
-            primaryColor
+            Theme.backgroundColor
                 .edgesIgnoringSafeArea(.all)
 
             VStack(spacing: 20) {
@@ -24,10 +20,11 @@ struct AuthView: View {
                 Text(isSignUp ? "Create an Account" : "Welcome Back")
                     .font(.largeTitle)
                     .fontWeight(.bold)
-                    .foregroundColor(.white)
+                    .foregroundColor(Theme.primaryTextColor)
 
                 // Email input
                 TextField("Email", text: $email)
+                    .keyboardType(.emailAddress)
                     .autocapitalization(.none)
                     .padding()
                     .background(Color.white.opacity(0.9))
@@ -58,7 +55,7 @@ struct AuthView: View {
                         .foregroundColor(.white)
                         .padding()
                         .frame(maxWidth: .infinity)
-                        .background(accentColor)
+                        .background(Theme.highlightColor)
                         .cornerRadius(10)
                         .shadow(radius: 5)
                 }
@@ -70,7 +67,7 @@ struct AuthView: View {
                 }) {
                     Text(isSignUp ? "Already have an account? Sign In" : "Don't have an account? Sign Up")
                         .font(.footnote)
-                        .foregroundColor(.white)
+                        .foregroundColor(Theme.primaryTextColor)
                 }
                 Spacer()
             }
@@ -79,7 +76,7 @@ struct AuthView: View {
     }
 
     private func signIn() {
-        Auth.auth().signIn(withEmail: email, password: password) { authResult, error in
+        Auth.auth().signIn(withEmail: email, password: password) { _, error in
             if let error = error {
                 errorMessage = error.localizedDescription
             } else {
@@ -94,9 +91,18 @@ struct AuthView: View {
     }
 
     private func signUp() {
-        Auth.auth().createUser(withEmail: email, password: password) { authResult, error in
+        Auth.auth().createUser(withEmail: email, password: password) { _, error in
             if let error = error {
                 errorMessage = error.localizedDescription
+            } else {
+                // Send email verification
+                Auth.auth().currentUser?.sendEmailVerification { error in
+                    if let error = error {
+                        errorMessage = error.localizedDescription
+                    } else {
+                        errorMessage = "Verification email sent. Please check your inbox."
+                    }
+                }
             }
         }
     }

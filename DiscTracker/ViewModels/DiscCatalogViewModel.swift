@@ -14,7 +14,7 @@ class DiscCatalogViewModel: ObservableObject {
     private let db = Firestore.firestore()
     private let userDiscViewModel = UserDiscViewModel()
 
-    func addDisc(name: String, type: String, plasticType: String, condition: String, imageData: Data?) {
+    func addDisc(name: String, type: String, plasticType: String, condition: String) {
         guard let userId = Auth.auth().currentUser?.uid else { return }
         let newDisc = Disc(
             id: UUID(),
@@ -22,7 +22,6 @@ class DiscCatalogViewModel: ObservableObject {
             type: type,
             plasticType: plasticType,
             condition: condition,
-            imageData: imageData,
             lost: false,
             traded: false
         )

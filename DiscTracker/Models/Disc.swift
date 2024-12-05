@@ -13,7 +13,21 @@ struct Disc: Codable, Identifiable {
     var type: String
     var plasticType: String
     var condition: String
-    var imageData: Data?
     var lost: Bool
     var traded: Bool
+
+    /// Toggles the lost status of the disc.
+    mutating func toggleLostStatus() {
+        lost.toggle()
+    }
+
+    /// Toggles the traded status of the disc.
+    mutating func toggleTradedStatus() {
+        traded.toggle()
+    }
+
+    /// Updates the condition of the disc.
+    mutating func updateCondition(to newCondition: String) {
+        condition = newCondition
+    }
 }
