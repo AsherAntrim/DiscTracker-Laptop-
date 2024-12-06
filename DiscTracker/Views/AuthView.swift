@@ -15,10 +15,10 @@ struct CustomSecureField: View {
             .padding(14)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.gray)
+                    .fill(Color(UIColor.secondarySystemBackground))
             )
-            .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-            .foregroundColor(.black)
+            .foregroundColor(.primary)
+            .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
     }
 }
 
@@ -48,14 +48,12 @@ struct AuthView: View {
                     .keyboardType(.emailAddress)
                     .autocapitalization(.none)
                     .padding()
-                    .background(Color.white.opacity(0.9))
                     .cornerRadius(10)
                     .shadow(radius: 5)
 
                 // Password input
                 CustomSecureField("Password", text: $password)
                     .padding()
-                    .background(Color.white.opacity(0.9))
                     .cornerRadius(10)
                     .shadow(radius: 5)
 

@@ -84,21 +84,22 @@ struct DiscCatalogView: View {
                                             VStack(alignment: .leading, spacing: 4) {
                                                 Text(disc.name)
                                                     .font(.headline)
-                                                    .foregroundColor(Theme.accentColor) // Updated to accent color
+                                                    .foregroundColor(.primary)
                                                 Text("\(disc.type) | \(disc.plasticType)")
                                                     .font(.subheadline)
-                                                    .foregroundColor(.black) // Distinct secondary text color
+                                                    .foregroundColor(.secondary)
+                
                                             }
-                                            Spacer() // Pushes content to the left
+                                            Spacer()
                                             Image(systemName: "chevron.right")
                                                 .foregroundColor(.gray)
                                         }
                                         .padding()
-                                        .background(Color.white) // Ensure proper background
+                                        .background(Color(UIColor.secondarySystemBackground))
                                         .cornerRadius(10)
                                         .shadow(radius: 1)
                                     }
-                                    .padding(.horizontal) // Add padding to match the full width
+                                    .padding(.horizontal)
                                 }
                             }
                             .padding(.top)

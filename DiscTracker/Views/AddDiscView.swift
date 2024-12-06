@@ -15,14 +15,12 @@ struct CustomTextField: View {
             .padding(14)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.gray)
+                    .fill(Color(UIColor.secondarySystemBackground))
             )
-            .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-            .foregroundColor(.black)
+            .foregroundColor(.primary)
+            .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
     }
 }
-
-import SwiftUI
 
 struct AddDiscView: View {
     @Environment(\.presentationMode) var presentationMode
@@ -34,21 +32,18 @@ struct AddDiscView: View {
     @State private var plasticType: String = ""
     @State private var selectedCondition: String = "New"
 
-    // Predefined conditions
     let conditions = ["New", "Barely Thrown", "Good", "Worn", "Beat"]
 
     var body: some View {
         ZStack {
-            // Green background
             Theme.backgroundColor
                 .edgesIgnoringSafeArea(.all)
 
             VStack(spacing: 20) {
-                // Header
                 Text("Add a New Disc")
                     .font(.largeTitle)
                     .fontWeight(.bold)
-                    .foregroundColor(Theme.primaryTextColor)
+                    .foregroundColor(.primary)
                     .padding(.top, 40)
 
                 // Input Fields
@@ -57,22 +52,23 @@ struct AddDiscView: View {
                     CustomTextField("Model", text: $type)
                     CustomTextField("Plastic Type", text: $plasticType)
 
-                    // Condition Dropdown
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Condition")
                             .font(.headline)
-                            .foregroundColor(Theme.primaryTextColor)
+                            .foregroundColor(.primary)
 
                         Picker("Select Condition", selection: $selectedCondition) {
                             ForEach(conditions, id: \.self) { condition in
-                                Text(condition).tag(condition)
+                                Text(condition)
+                                    .foregroundColor(.primary)
+                                    .tag(condition)
                             }
                         }
-                        .pickerStyle(MenuPickerStyle()) // Dropdown-style picker
+                        .pickerStyle(MenuPickerStyle())
                         .padding(10)
                         .background(
                             RoundedRectangle(cornerRadius: 12)
-                                .fill(Color.white)
+                                .fill(Color(UIColor.secondarySystemBackground))
                         )
                         .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
                     }
@@ -86,10 +82,14 @@ struct AddDiscView: View {
                     Button(action: saveDisc) {
                         Text("Save Disc")
                             .font(.headline)
-                            .foregroundColor(.white)
+                            .foregroundColor(.white) // This is fine if Theme.highlightColor is dark enough
                             .padding()
                             .frame(maxWidth: .infinity)
-                            .background(name.isEmpty || type.isEmpty || plasticType.isEmpty ? Color.gray : Theme.highlightColor)
+                            .background(
+                                name.isEmpty || type.isEmpty || plasticType.isEmpty
+                                ? Color.gray
+                                : Theme.highlightColor
+                            )
                             .cornerRadius(12)
                             .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 4)
                     }
@@ -98,7 +98,7 @@ struct AddDiscView: View {
                     Button(action: { presentationMode.wrappedValue.dismiss() }) {
                         Text("Cancel")
                             .font(.headline)
-                            .foregroundColor(.white)
+                            .foregroundColor(.white) // Assuming Theme.accentColor is suitable
                             .padding()
                             .frame(maxWidth: .infinity)
                             .background(Theme.accentColor)
