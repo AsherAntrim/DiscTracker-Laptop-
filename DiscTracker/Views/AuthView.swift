@@ -1,43 +1,59 @@
 import SwiftUI
 import FirebaseAuth
 
+struct CustomSecureField: View {
+    var placeholder: String
+    @Binding var text: String
+
+    init(_ placeholder: String, text: Binding<String>) {
+        self.placeholder = placeholder
+        self._text = text
+    }
+
+    var body: some View {
+        SecureField(placeholder, text: $text)
+            .padding(14)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(UIColor.secondarySystemBackground))
+            )
+            .foregroundColor(.primary)
+            .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+    }
+}
+
 struct AuthView: View {
     @State private var email: String = ""
     @State private var password: String = ""
     @State private var isSignUp: Bool = false
     @State private var errorMessage: String = ""
 
-    // Updated theme colors for DiscTracker
-    let primaryColor = Color(red: 34/255, green: 139/255, blue: 34/255) // Green
-    let accentColor = Color(red: 255/255, green: 140/255, blue: 0/255) // Orange
-
     var body: some View {
         ZStack {
             // Primary background
-            primaryColor
-                .edgesIgnoringSafeArea(.all) // Ensures the background covers the entire screen
+            Theme.backgroundColor
+                .edgesIgnoringSafeArea(.all)
 
             VStack(spacing: 20) {
-                Spacer() // Push content towards the center
+                Spacer()
 
                 // Heading
                 Text(isSignUp ? "Create an Account" : "Welcome Back")
                     .font(.largeTitle)
                     .fontWeight(.bold)
-                    .foregroundColor(.white)
+                    .foregroundColor(Theme.primaryTextColor)
 
                 // Email input
-                TextField("Email", text: $email)
+                CustomTextField("Email", text: $email)
+                    .keyboardType(.emailAddress)
                     .autocapitalization(.none)
                     .padding()
-                    .background(Color.white.opacity(0.9))
                     .cornerRadius(10)
                     .shadow(radius: 5)
 
                 // Password input
-                SecureField("Password", text: $password)
+                CustomSecureField("Password", text: $password)
                     .padding()
-                    .background(Color.white.opacity(0.9))
                     .cornerRadius(10)
                     .shadow(radius: 5)
 
@@ -58,41 +74,28 @@ struct AuthView: View {
                         .foregroundColor(.white)
                         .padding()
                         .frame(maxWidth: .infinity)
-                        .background(accentColor)
+                        .background(Theme.highlightColor)
                         .cornerRadius(10)
                         .shadow(radius: 5)
                 }
                 .padding(.horizontal)
 
-                // Toggle between Sign Up and Sign In
+                // Toggle between Sign In and Sign Up
                 Button(action: {
                     isSignUp.toggle()
                 }) {
                     Text(isSignUp ? "Already have an account? Sign In" : "Don't have an account? Sign Up")
                         .font(.footnote)
-                        .foregroundColor(.white)
+                        .foregroundColor(Theme.primaryTextColor)
                 }
-
-                // Resend email verification
-                if !isSignUp {
-                    Button(action: {
-                        sendEmailVerification()
-                    }) {
-                        Text("Resend Verification Email")
-                            .font(.footnote)
-                            .foregroundColor(.white)
-                            .underline()
-                    }
-                }
-
-                Spacer() // Push content towards the center
+                Spacer()
             }
-            .padding() // Adds padding to the content
+            .padding()
         }
     }
 
     private func signIn() {
-        Auth.auth().signIn(withEmail: email, password: password) { authResult, error in
+        Auth.auth().signIn(withEmail: email, password: password) { _, error in
             if let error = error {
                 errorMessage = error.localizedDescription
             } else {
@@ -107,23 +110,17 @@ struct AuthView: View {
     }
 
     private func signUp() {
-        Auth.auth().createUser(withEmail: email, password: password) { authResult, error in
+        Auth.auth().createUser(withEmail: email, password: password) { _, error in
             if let error = error {
                 errorMessage = error.localizedDescription
             } else {
-                errorMessage = ""
-                sendEmailVerification()
-            }
-        }
-    }
-
-    private func sendEmailVerification() {
-        if let user = Auth.auth().currentUser {
-            user.sendEmailVerification { error in
-                if let error = error {
-                    errorMessage = "Failed to send verification email: \(error.localizedDescription)"
-                } else {
-                    errorMessage = "Verification email sent. Please check your inbox."
+                // Send email verification
+                Auth.auth().currentUser?.sendEmailVerification { error in
+                    if let error = error {
+                        errorMessage = error.localizedDescription
+                    } else {
+                        errorMessage = "Verification email sent. Please check your inbox."
+                    }
                 }
             }
         }

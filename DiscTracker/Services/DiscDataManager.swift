@@ -6,29 +6,59 @@
 //
 
 import Foundation
+import FirebaseFirestore
 
-/// Manages the data operations for discs, including saving and loading.
 class DiscDataManager {
-    private let userDefaultsKey = "savedDiscs"
+    private let db = Firestore.firestore()
 
-    /// Saves the given array of discs to UserDefaults.
-    func saveDiscs(_ discs: [Disc]) {
-        do {
-            let encodedData = try JSONEncoder().encode(discs)
-            UserDefaults.standard.set(encodedData, forKey: userDefaultsKey)
-        } catch {
-            print("Failed to save discs: \(error.localizedDescription)")
+    /// Saves discs for the authenticated user.
+    func saveDiscs(_ discs: [Disc], userId: String) {
+        let userDiscsRef = db.collection("users").document(userId).collection("discs")
+
+        // Clear existing data
+        userDiscsRef.getDocuments { snapshot, error in
+            if let error = error {
+                print("Error clearing discs: \(error.localizedDescription)")
+                return
+            }
+            snapshot?.documents.forEach { $0.reference.delete() }
+        }
+
+        // Save updated data
+        for disc in discs {
+            do {
+                let encodedDisc = try JSONEncoder().encode(disc)
+                if let jsonData = try JSONSerialization.jsonObject(with: encodedDisc) as? [String: Any] {
+                    userDiscsRef.document(disc.id.uuidString).setData(jsonData)
+                }
+            } catch {
+                print("Failed to encode and save disc: \(error.localizedDescription)")
+            }
         }
     }
 
-    /// Loads the array of discs from UserDefaults.
-    func loadDiscs() -> [Disc] {
-        guard let savedData = UserDefaults.standard.data(forKey: userDefaultsKey) else { return [] }
-        do {
-            return try JSONDecoder().decode([Disc].self, from: savedData)
-        } catch {
-            print("Failed to load discs: \(error.localizedDescription)")
-            return []
+    /// Loads discs for the authenticated user.
+    func loadDiscs(userId: String, completion: @escaping ([Disc]) -> Void) {
+        let userDiscsRef = db.collection("users").document(userId).collection("discs")
+
+        userDiscsRef.getDocuments { snapshot, error in
+            if let error = error {
+                print("Failed to load discs: \(error.localizedDescription)")
+                completion([])
+                return
+            }
+
+            var discs: [Disc] = []
+            snapshot?.documents.forEach { document in
+                do {
+                    let jsonData = try JSONSerialization.data(withJSONObject: document.data(), options: [])
+                    let disc = try JSONDecoder().decode(Disc.self, from: jsonData)
+                    discs.append(disc)
+                } catch {
+                    print("Failed to decode disc: \(error.localizedDescription)")
+                }
+            }
+            completion(discs)
         }
     }
 }
