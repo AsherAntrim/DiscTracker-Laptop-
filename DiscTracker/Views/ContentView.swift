@@ -46,13 +46,6 @@ struct DiscCatalogView: View {
         .onDisappear {
             removeAuthListener()
         }
-        .alert(isPresented: $showAlert) {
-            Alert(
-                title: Text("Success"),
-                message: Text("Your disc has been added to the catalog."),
-                dismissButton: .default(Text("OK"))
-            )
-        }
     }
 
     /// The tab view containing Disc Catalog and Account tabs.
@@ -63,12 +56,16 @@ struct DiscCatalogView: View {
                     Label("Discs", systemImage: "tray.full")
                 }
             
+            AchievementsView(userDiscViewModel: userDiscViewModel)
+                .tabItem {
+                    Label("Achievements", systemImage: "medal")
+                }
+            
             AccountView(userDiscViewModel: userDiscViewModel)
                 .tabItem {
                     Label("Account", systemImage: "person.circle")
                 }
         }
-        .background(backgroundColor.edgesIgnoringSafeArea(.all)) // Themed background
     }
 
     /// The Disc Catalog tab.
