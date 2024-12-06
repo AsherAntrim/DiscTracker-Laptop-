@@ -19,28 +19,6 @@ class UserDiscViewModel: ObservableObject {
         loadUser()
     }
     
-    /// Handles the addition of a disc and updates user stats based on the current disc count.
-    func handleDiscAddition(currentDiscCount: Int) {
-        guard var currentUser = user else {
-            print("Error: No user object available.")
-            return
-        }
-
-        // Increment disc points for adding a disc
-        addDiscPoints(10)
-
-        // Update maxDiscsCataloged if the new disc count exceeds the previous maximum
-        if currentDiscCount > currentUser.maxDiscsCataloged {
-            currentUser.maxDiscsCataloged = currentDiscCount
-            print("Updated maxDiscsCataloged to: \(currentUser.maxDiscsCataloged)")
-            milestoneDiscsCataloged(currentUser: currentUser)
-        }
-
-        // Save updated user
-        updateUser(currentUser)
-    }
-
-    
     /// Rewards the user based on the number of discs they've cataloged.
     private func rewardUser(for catalogSize: Int) {
         let milestones = [10, 25, 50, 100] // Milestones for rewards
@@ -59,6 +37,7 @@ class UserDiscViewModel: ObservableObject {
             return
         }
         currentUser.discPoints += points
+        discPoints = currentUser.discPoints 
         updateUser(currentUser)
     }
 
@@ -71,18 +50,6 @@ class UserDiscViewModel: ObservableObject {
         user = currentUser
     }
     
-    private func milestoneDiscsCataloged(currentUser: User) {
-        if (currentUser.maxDiscsCataloged == 10){
-            addDiscPoints(50)
-        } else if (currentUser.maxDiscsCataloged == 25){
-            addDiscPoints(100)
-        } else if (currentUser.maxDiscsCataloged == 50){
-            addDiscPoints(250)
-        } else if (currentUser.maxDiscsCataloged == 100){
-            addDiscPoints(500)
-        }
-    }
-    
     private func updateUser(_ updatedUser: User) {
         user = updatedUser
         discPoints = updatedUser.discPoints
@@ -92,7 +59,6 @@ class UserDiscViewModel: ObservableObject {
     /// Loads the user data from the data manager.
     func loadUser(completion: ((Int) -> Void)? = nil) {
         if let loadedUser = userManager.loadUser() {
-            print("Loaded user with maxDiscsCataloged: \(loadedUser.maxDiscsCataloged)")
             user = loadedUser
             discPoints = loadedUser.discPoints
             completion?(loadedUser.discPoints)
@@ -104,7 +70,7 @@ class UserDiscViewModel: ObservableObject {
     
     /// Creates a default user if no user data is found.
     private func createDefaultUser() {
-        let defaultUser = User(id: UUID().uuidString, username: "DefaultUser", email: "default@example.com", discPoints: 0, maxDiscsCataloged: 0)
+        let defaultUser = User(id: UUID().uuidString, username: "DefaultUser", email: "default@example.com", discPoints: 0)
         updateUser(defaultUser)
     }
 
@@ -116,9 +82,5 @@ class UserDiscViewModel: ObservableObject {
         }
         currentUser.discPoints = 0
         updateUser(currentUser)
-    }
-    
-    var getMaxDiscsCataloged: Int {
-        user?.maxDiscsCataloged ?? 0
     }
 }

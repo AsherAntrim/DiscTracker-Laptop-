@@ -42,6 +42,11 @@ struct DiscCatalogView: View {
                 .tabItem {
                     Label("Discs", systemImage: "tray.full")
                 }
+            
+            AchievementsView(userDiscViewModel: userDiscViewModel, discCatalogViewModel: discCatalogViewModel)
+                .tabItem {
+                    Label("Achievements", systemImage: "medal")
+                }
 
             AccountView(userDiscViewModel: userDiscViewModel)
                 .tabItem {

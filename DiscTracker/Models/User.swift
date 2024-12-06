@@ -15,5 +15,4 @@ struct User: Codable {
     var username: String
     var email: String
     var discPoints: Int
-    var maxDiscsCataloged: Int
 }

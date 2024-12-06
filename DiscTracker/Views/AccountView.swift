@@ -9,7 +9,7 @@ import SwiftUI
 import FirebaseAuth
 
 struct AccountView: View {
-    @ObservedObject var userDiscViewModel: UserDiscViewModel
+    @StateObject var userDiscViewModel: UserDiscViewModel
     @State private var userEmail: String = ""
     @State private var isEmailVerified: Bool = false
 
@@ -27,7 +27,7 @@ struct AccountView: View {
                     .font(.title2)
                     .foregroundColor(Theme.highlightColor)
                 Spacer()
-                Text("\(userDiscViewModel.discPoints)")
+                Text("\(userDiscViewModel.discPoints)")  // Display the discPoints from UserDiscViewModel
                     .font(.title2)
                     .foregroundColor(Theme.highlightColor)
             }
@@ -72,7 +72,7 @@ struct AccountView: View {
                 .padding(.bottom, 20)
         }
         .onAppear {
-            loadUserDetails()
+            userDiscViewModel.loadUser()
         }
         .padding()
         .background(Theme.backgroundColor.edgesIgnoringSafeArea(.all))

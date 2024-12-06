@@ -10,6 +10,7 @@ import FirebaseAuth
 
 class DiscCatalogViewModel: ObservableObject {
     @Published var discs: [Disc] = []
+    @Published var discCount: Int = 0
     @Published var sortType: SortType = .name
     private let db = Firestore.firestore()
     private let userDiscViewModel = UserDiscViewModel()
@@ -26,10 +27,13 @@ class DiscCatalogViewModel: ObservableObject {
             traded: false
         )
         discs.append(newDisc)
-        userDiscViewModel.handleDiscAddition(currentDiscCount: discs.count)
+        userDiscViewModel.addDiscPoints(10)
+        
+        countDiscs()
         
         saveDiscToFirestore(disc: newDisc, userId: userId)
     }
+
 
     private func saveDiscToFirestore(disc: Disc, userId: String) {
         let userDiscsRef = db.collection("users").document(userId).collection("discs")
@@ -109,6 +113,22 @@ class DiscCatalogViewModel: ObservableObject {
                 print("Error deleting disc from Firestore: \(error.localizedDescription)")
             } else {
                 print("Disc successfully deleted from Firestore.")
+            }
+        }
+    }
+    
+    func countDiscs() {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+        let userDiscsRef = db.collection("users").document(userId).collection("discs")
+
+        userDiscsRef.getDocuments { snapshot, error in
+            if let error = error {
+                print("Failed to load discs from Firestore: \(error.localizedDescription)")
+                return
+            }
+
+            DispatchQueue.main.async {
+                self.discCount = snapshot?.documents.count ?? 0 // Set the disc count
             }
         }
     }
