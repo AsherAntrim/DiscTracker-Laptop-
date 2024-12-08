@@ -9,7 +9,6 @@ import Foundation
 import FirebaseFirestore
 
 
-/// Represents a user in the app.
 struct User: Codable {
     var id: String
     var username: String
