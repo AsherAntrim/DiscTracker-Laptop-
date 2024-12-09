@@ -78,6 +78,8 @@ class DiscCatalogViewModel: ObservableObject {
             DispatchQueue.main.async {
                 self.discs = loadedDiscs
             }
+            
+            self.countDiscs()
         }
     }
 
