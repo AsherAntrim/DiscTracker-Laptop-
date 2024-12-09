@@ -14,5 +14,6 @@ struct Achievement: Identifiable, Codable {
     var points: Int
     var requiredDiscCount: Int?
     var requiredDiscPoints: Int?
+    var requiredFavorites: Int?
     var isEarned: Bool = false
 }

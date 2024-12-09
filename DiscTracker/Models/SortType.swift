@@ -7,13 +7,11 @@
 
 import Foundation
 
-/// Enum representing the different types of sorting available for discs.
 enum SortType: String, CaseIterable, Identifiable {
-    case name, type, plastic, condition, lost, traded
+    case name, type, plastic, condition, lost, traded, favorite
 
     var id: String { self.rawValue }
 
-    /// Returns a closure that can be used to sort an array of discs by this sort type.
     func sortClosure() -> (Disc, Disc) -> Bool {
         switch self {
         case .name:
@@ -28,6 +26,8 @@ enum SortType: String, CaseIterable, Identifiable {
             return { $0.lost && !$1.lost }
         case .traded:
             return { $0.traded && !$1.traded }
+        case .favorite:
+            return { $0.favorite && !$1.favorite }
         }
     }
 }

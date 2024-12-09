@@ -15,19 +15,27 @@ struct Disc: Codable, Identifiable {
     var condition: String
     var lost: Bool
     var traded: Bool
+    var favorite: Bool
+    
+    // Flight numbers
+    var speed: Double
+    var glide: Double
+    var turn: Double
+    var fade: Double
 
-    /// Toggles the lost status of the disc.
     mutating func toggleLostStatus() {
         lost.toggle()
     }
 
-    /// Toggles the traded status of the disc.
     mutating func toggleTradedStatus() {
         traded.toggle()
     }
 
-    /// Updates the condition of the disc.
     mutating func updateCondition(to newCondition: String) {
         condition = newCondition
+    }
+    
+    mutating func toggleFavoriteStatus() {
+        favorite.toggle()
     }
 }

@@ -3,19 +3,23 @@
 //  DiscTracker
 //
 //  Created by Asher Antrim on 9/11/24.
+//  Modified by OpenAI on 12/09/24.
 //
 
 import FirebaseFirestore
 import FirebaseAuth
+import SwiftUI
 
 class DiscCatalogViewModel: ObservableObject {
     @Published var discs: [Disc] = []
     @Published var discCount: Int = 0
+    @Published var favoriteCount: Int = 0
     @Published var sortType: SortType = .name
+    
     private let db = Firestore.firestore()
     private let userDiscViewModel = UserDiscViewModel()
 
-    func addDisc(name: String, type: String, plasticType: String, condition: String) {
+    func addDisc(name: String, type: String, plasticType: String, condition: String, speed: Double, glide: Double, turn: Double, fade: Double) {
         guard let userId = Auth.auth().currentUser?.uid else { return }
         let newDisc = Disc(
             id: UUID(),
@@ -24,28 +28,29 @@ class DiscCatalogViewModel: ObservableObject {
             plasticType: plasticType,
             condition: condition,
             lost: false,
-            traded: false
+            traded: false,
+            favorite: false,
+            speed: speed,
+            glide: glide,
+            turn: turn,
+            fade: fade
         )
         discs.append(newDisc)
         userDiscViewModel.addDiscPoints(10)
         
         countDiscs()
-        
+        countFavorites()
         saveDiscToFirestore(disc: newDisc, userId: userId)
     }
 
-
     private func saveDiscToFirestore(disc: Disc, userId: String) {
         let userDiscsRef = db.collection("users").document(userId).collection("discs")
-
         do {
             let encodedDisc = try JSONEncoder().encode(disc)
             if let jsonData = try JSONSerialization.jsonObject(with: encodedDisc) as? [String: Any] {
                 userDiscsRef.document(disc.id.uuidString).setData(jsonData) { error in
                     if let error = error {
                         print("Error saving disc to Firestore: \(error.localizedDescription)")
-                    } else {
-                        print("Disc successfully saved to Firestore.")
                     }
                 }
             }
@@ -57,7 +62,6 @@ class DiscCatalogViewModel: ObservableObject {
     func loadDiscs() {
         guard let userId = Auth.auth().currentUser?.uid else { return }
         let userDiscsRef = db.collection("users").document(userId).collection("discs")
-
         userDiscsRef.getDocuments { snapshot, error in
             if let error = error {
                 print("Failed to load discs from Firestore: \(error.localizedDescription)")
@@ -74,12 +78,12 @@ class DiscCatalogViewModel: ObservableObject {
                     print("Failed to decode disc: \(error.localizedDescription)")
                 }
             }
-            
+
             DispatchQueue.main.async {
                 self.discs = loadedDiscs
+                self.countDiscs()
+                self.countFavorites()
             }
-            
-            self.countDiscs()
         }
     }
 
@@ -89,49 +93,79 @@ class DiscCatalogViewModel: ObservableObject {
             deleteDiscFromFirestore(disc: disc, userId: userId)
         }
         discs.remove(atOffsets: offsets)
+        countDiscs()
+        countFavorites()
     }
-    
+
     func updateDiscStatus(disc: Disc, userId: String) {
         let userDiscsRef = db.collection("users").document(userId).collection("discs")
         
-        let updatedData: [String: Any] = [
-            "lost": disc.lost,
-            "traded": disc.traded
-        ]
-        
-        userDiscsRef.document(disc.id.uuidString).updateData(updatedData) { error in
-            if let error = error {
-                print("Error updating disc status in Firestore: \(error.localizedDescription)")
-            } else {
-                print("Disc status successfully updated in Firestore.")
+        do {
+            let encoded = try JSONEncoder().encode(disc)
+            if let jsonData = try JSONSerialization.jsonObject(with: encoded) as? [String: Any] {
+                userDiscsRef.document(disc.id.uuidString).setData(jsonData) { error in
+                    if let error = error {
+                        print("Error updating disc in Firestore: \(error.localizedDescription)")
+                    }
+                }
             }
+        } catch {
+            print("Failed to encode updated disc: \(error.localizedDescription)")
         }
+        countFavorites()
     }
 
     private func deleteDiscFromFirestore(disc: Disc, userId: String) {
         let userDiscsRef = db.collection("users").document(userId).collection("discs")
         userDiscsRef.document(disc.id.uuidString).delete { error in
             if let error = error {
-                print("Error deleting disc from Firestore: \(error.localizedDescription)")
-            } else {
-                print("Disc successfully deleted from Firestore.")
+                print("Error deleting disc: \(error.localizedDescription)")
             }
         }
     }
     
     func countDiscs() {
-        guard let userId = Auth.auth().currentUser?.uid else { return }
-        let userDiscsRef = db.collection("users").document(userId).collection("discs")
-
-        userDiscsRef.getDocuments { snapshot, error in
-            if let error = error {
-                print("Failed to load discs from Firestore: \(error.localizedDescription)")
-                return
-            }
-
-            DispatchQueue.main.async {
-                self.discCount = snapshot?.documents.count ?? 0 // Set the disc count
-            }
+        discCount = discs.count
+    }
+    
+    func countFavorites() {
+        favoriteCount = discs.filter { $0.favorite }.count
+    }
+    
+    func toggleFavorite(disc: Disc) {
+        guard let index = discs.firstIndex(where: { $0.id == disc.id }) else { return }
+        discs[index].toggleFavoriteStatus()
+        
+        if let userId = Auth.auth().currentUser?.uid {
+            updateDiscStatus(disc: discs[index], userId: userId)
         }
+    }
+}
+
+// MARK: - Recommendation Feature
+extension DiscCatalogViewModel {
+    func recommendDisc(stability: String, distance: Int) -> Disc? {
+        let filteredByStability: [Disc]
+        switch stability.lowercased() {
+        case "overstable":
+            filteredByStability = discs.filter { ($0.turn + $0.fade) > 0 }
+        case "understable":
+            filteredByStability = discs.filter { ($0.turn + $0.fade) < 0 }
+        case "stable":
+            filteredByStability = discs.filter { ($0.turn + $0.fade) == 0 }
+        default:
+            filteredByStability = discs
+        }
+
+        let filteredByDistance: [Disc]
+        if distance > 200 {
+            filteredByDistance = filteredByStability.filter { $0.speed >= 9 }
+        } else if distance >= 100 {
+            filteredByDistance = filteredByStability.filter { $0.speed >= 4 && $0.speed <= 8 }
+        } else {
+            filteredByDistance = filteredByStability.filter { $0.speed < 4 }
+        }
+
+        return filteredByDistance.first
     }
 }

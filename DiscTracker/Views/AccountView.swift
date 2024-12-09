@@ -3,6 +3,7 @@
 //  DiscTracker
 //
 //  Created by Asher Antrim on 11/20/24.
+//  Modified by OpenAI on 12/09/24.
 //
 
 import SwiftUI
@@ -15,7 +16,6 @@ struct AccountView: View {
 
     var body: some View {
         VStack(spacing: 20) {
-            // Header
             Text("Account Details")
                 .font(.largeTitle)
                 .fontWeight(.bold)
@@ -27,7 +27,7 @@ struct AccountView: View {
                     .font(.title2)
                     .foregroundColor(Theme.highlightColor)
                 Spacer()
-                Text("\(userDiscViewModel.discPoints)")  // Display the discPoints from UserDiscViewModel
+                Text("\(userDiscViewModel.discPoints)")
                     .font(.title2)
                     .foregroundColor(Theme.highlightColor)
             }
@@ -35,22 +35,16 @@ struct AccountView: View {
             .background(Theme.accentColor.opacity(0.2))
             .cornerRadius(10)
 
-            // User Info Section
             VStack(alignment: .leading, spacing: 10) {
                 Text("Email: \(userEmail)")
                     .font(.headline)
                     .foregroundColor(Theme.primaryTextColor)
-
-                Text("Email Verified: \(isEmailVerified ? "Yes" : "No")")
-                    .font(.subheadline)
-                    .foregroundColor(isEmailVerified ? .green : .red)
             }
             .padding()
             .background(Theme.accentColor.opacity(0.2))
             .cornerRadius(10)
             .shadow(radius: 5)
 
-            // Sign-Out Button
             Button(action: signOut) {
                 Text("Sign Out")
                     .font(.headline)
@@ -65,7 +59,6 @@ struct AccountView: View {
 
             Spacer()
 
-            // Footer with branding or app message
             Text("DiscTracker - Manage Your Game, Anytime.")
                 .font(.footnote)
                 .foregroundColor(Theme.secondaryTextColor)
@@ -73,6 +66,7 @@ struct AccountView: View {
         }
         .onAppear {
             userDiscViewModel.loadUser()
+            loadUserDetails()
         }
         .padding()
         .background(Theme.backgroundColor.edgesIgnoringSafeArea(.all))
@@ -91,12 +85,5 @@ struct AccountView: View {
         } catch let signOutError as NSError {
             print("Error signing out: %@", signOutError)
         }
-    }
-}
-
-struct AccountView_Previews: PreviewProvider {
-    static var previews: some View {
-        let userDiscViewModel = UserDiscViewModel()
-        AccountView(userDiscViewModel: userDiscViewModel)
     }
 }

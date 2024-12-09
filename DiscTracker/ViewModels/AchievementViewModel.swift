@@ -1,84 +1,139 @@
-//
-//  AchievementViewModel.swift
-//  DiscTracker
-//
-//  Created by Nathan Hollis on 12/8/24.
-//
-
 import Foundation
 import Combine
 
 class AchievementViewModel: ObservableObject {
     @Published var achievements: [Achievement] = []
     
-    // Add view models as dependencies
     private var userDiscViewModel: UserDiscViewModel
     private var discCatalogViewModel: DiscCatalogViewModel
+    private var cancellables: Set<AnyCancellable> = []
+    
+    private let earnedAchievementsKey = "earnedAchievementsIDs"
+    private var achievementsPendingPoints: [Achievement] = []
     
     init(userDiscViewModel: UserDiscViewModel, discCatalogViewModel: DiscCatalogViewModel) {
         self.userDiscViewModel = userDiscViewModel
         self.discCatalogViewModel = discCatalogViewModel
         loadAchievements()
         
-        // Re-evaluate achievements when the user disc points change or when disc catalog changes
-        self.userDiscViewModel.$discPoints
-            .sink { [weak self] _ in self?.loadAchievements() }
+        userDiscViewModel.$discPoints
+            .sink { [weak self] _ in self?.checkAndUpdateAchievements() }
             .store(in: &cancellables)
         
-        self.discCatalogViewModel.$discCount
-            .sink { [weak self] _ in self?.loadAchievements() }
+        discCatalogViewModel.$discCount
+            .sink { [weak self] _ in self?.checkAndUpdateAchievements() }
+            .store(in: &cancellables)
+        
+        discCatalogViewModel.$favoriteCount
+            .sink { [weak self] _ in self?.checkAndUpdateAchievements() }
+            .store(in: &cancellables)
+        
+        userDiscViewModel.$user
+            .sink { [weak self] user in
+                guard let self = self else { return }
+                if user != nil {
+                    // User just loaded, award any pending achievements
+                    self.awardPendingAchievements()
+                }
+            }
             .store(in: &cancellables)
     }
-    
-    private var cancellables: Set<AnyCancellable> = []
     
     func loadAchievements() {
-        // Create a copy of achievements that can be modified
-        var updatedAchievements = AchievementDataManager.shared.achievements
+        let baseAchievements = AchievementDataManager.shared.achievements
+        let earnedAchievementIDs = loadEarnedAchievements()
         
-        // Update each achievement's earned status
+        achievements = baseAchievements.map { achievement in
+            var updated = achievement
+            if earnedAchievementIDs.contains(updated.id.uuidString) {
+                updated.isEarned = true
+            }
+            return updated
+        }
+        
+        checkAndUpdateAchievements()
+    }
+    
+    private func checkAndUpdateAchievements() {
+        var updatedAchievements = achievements
+        var newlyEarnedAchievements: [Achievement] = []
+        
         for index in 0..<updatedAchievements.count {
-            updatedAchievements[index] = updateAchievementStatus(updatedAchievements[index])
+            let achievement = updatedAchievements[index]
+            let currentlyEarned = achievement.isEarned
+            let newEarnedStatus = isAchievementEarned(
+                achievement,
+                discCount: discCatalogViewModel.discCount,
+                discPoints: userDiscViewModel.discPoints,
+                favorites: discCatalogViewModel.favoriteCount
+            )
+            
+            if newEarnedStatus && !currentlyEarned {
+                updatedAchievements[index].isEarned = true
+                saveEarnedAchievement(id: achievement.id)
+                newlyEarnedAchievements.append(updatedAchievements[index])
+            }
         }
         
-        // Update the published achievements
         achievements = updatedAchievements
+        
+        // Attempt to award points for newly earned achievements
+        awardAchievements(newlyEarnedAchievements)
     }
     
-    private func updateAchievementStatus(_ achievement: Achievement) -> Achievement {
-        var mutableAchievement = achievement
+    private func awardAchievements(_ achievementsToAward: [Achievement]) {
+        // If the user is not loaded yet, queue them
+        guard let _ = userDiscViewModel.user else {
+            achievementsPendingPoints.append(contentsOf: achievementsToAward)
+            return
+        }
         
-        // Check if achievement is earned based on disc count or points
-        mutableAchievement.isEarned = isAchievementEarned(
-            achievement,
-            discCount: discCatalogViewModel.discCount,
-            discPoints: userDiscViewModel.discPoints
-        )
+        // User is loaded, award points immediately
+        for achievement in achievementsToAward {
+            userDiscViewModel.addDiscPoints(achievement.points)
+        }
         
-        return mutableAchievement
+        // If any achievements were pending, try awarding them now
+        if !achievementsPendingPoints.isEmpty {
+            awardPendingAchievements()
+        }
     }
     
-    func isAchievementEarned(_ achievement: Achievement, discCount: Int, discPoints: Int) -> Bool {
-        // Check disc count requirement
-        if let requiredDiscCount = achievement.requiredDiscCount {
-            if discCount >= requiredDiscCount {
-                if !achievement.isEarned {
-                    userDiscViewModel.addDiscPoints(achievement.points)
-                }
-                return true
-            }
+    private func awardPendingAchievements() {
+        guard !achievementsPendingPoints.isEmpty else { return }
+        guard let _ = userDiscViewModel.user else {
+            return
         }
         
-        // Check disc points requirement
-        if let requiredDiscPoints = achievement.requiredDiscPoints {
-            if discPoints >= requiredDiscPoints {
-                if !achievement.isEarned {
-                    userDiscViewModel.addDiscPoints(achievement.points)
-                }
-                return true
-            }
+        for achievement in achievementsPendingPoints {
+            userDiscViewModel.addDiscPoints(achievement.points)
         }
         
+        achievementsPendingPoints.removeAll()
+    }
+    
+    private func isAchievementEarned(_ achievement: Achievement, discCount: Int, discPoints: Int, favorites: Int) -> Bool {
+        if let requiredDiscCount = achievement.requiredDiscCount, discCount >= requiredDiscCount {
+            return true
+        }
+        if let requiredDiscPoints = achievement.requiredDiscPoints, discPoints >= requiredDiscPoints {
+            return true
+        }
+        if let requiredFavorites = achievement.requiredFavorites, favorites >= requiredFavorites {
+            return true
+        }
         return false
+    }
+    
+    private func loadEarnedAchievements() -> [String] {
+        UserDefaults.standard.stringArray(forKey: earnedAchievementsKey) ?? []
+    }
+    
+    private func saveEarnedAchievement(id: UUID) {
+        var earnedIDs = loadEarnedAchievements()
+        if !earnedIDs.contains(id.uuidString) {
+            earnedIDs.append(id.uuidString)
+            UserDefaults.standard.set(earnedIDs, forKey: earnedAchievementsKey)
+        }
     }
 }

@@ -3,13 +3,13 @@
 //  DiscTracker
 //
 //  Created by Asher Antrim on 9/11/24.
+//  Modified by OpenAI on 12/09/24.
 //
 
 import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
 
-/// The main view displaying the catalog of discs and account info.
 struct DiscCatalogView: View {
     @StateObject private var discCatalogViewModel = DiscCatalogViewModel()
     @StateObject private var userDiscViewModel = UserDiscViewModel()
@@ -35,14 +35,18 @@ struct DiscCatalogView: View {
         }
     }
 
-    /// The tab view containing Disc Catalog and Account tabs.
     private var mainTabView: some View {
         TabView {
             discCatalogTab
                 .tabItem {
                     Label("Discs", systemImage: "tray.full")
                 }
-            
+
+            RecommendationView(discCatalogViewModel: discCatalogViewModel)
+                .tabItem {
+                    Label("Recommendation", systemImage: "star")
+                }
+
             AchievementsView(userDiscViewModel: userDiscViewModel, discCatalogViewModel: discCatalogViewModel)
                 .tabItem {
                     Label("Achievements", systemImage: "medal")
@@ -56,7 +60,6 @@ struct DiscCatalogView: View {
         .accentColor(Theme.highlightColor)
     }
 
-    /// The Disc Catalog tab.
     private var discCatalogTab: some View {
         NavigationView {
             ZStack(alignment: .bottomTrailing) {
@@ -86,9 +89,11 @@ struct DiscCatalogView: View {
                                                 Text("\(disc.type) | \(disc.plasticType)")
                                                     .font(.subheadline)
                                                     .foregroundColor(.secondary)
-                
                                             }
                                             Spacer()
+                                            if disc.favorite {
+                                                Image(systemName: "heart.fill").foregroundColor(.red)
+                                            }
                                             Image(systemName: "chevron.right")
                                                 .foregroundColor(.gray)
                                         }
@@ -104,9 +109,8 @@ struct DiscCatalogView: View {
                         }
                     }
                 }
-                .background(Theme.backgroundColor.edgesIgnoringSafeArea(.all))
+                .background(Theme.backgroundColor)
 
-                // Add Disc Button
                 Button(action: { showAddDiscSheet.toggle() }) {
                     Image(systemName: "plus")
                         .font(.system(size: 24, weight: .bold))
@@ -126,7 +130,6 @@ struct DiscCatalogView: View {
         }
     }
 
-    /// The search bar for filtering discs.
     private var searchBar: some View {
         TextField("Search discs", text: $searchText)
             .padding(10)
@@ -135,7 +138,6 @@ struct DiscCatalogView: View {
             .padding(.horizontal)
     }
 
-    /// The list of discs filtered based on the search text.
     private var filteredDiscs: [Disc] {
         if searchText.isEmpty {
             return discCatalogViewModel.discs
@@ -155,12 +157,6 @@ struct DiscCatalogView: View {
         return $discCatalogViewModel.discs[discIndex]
     }
 
-    /// Deletes a disc at the specified offsets.
-    private func deleteDisc(at offsets: IndexSet) {
-        discCatalogViewModel.removeDisc(at: offsets)
-    }
-
-    /// Set up Firebase authentication listener
     private func setupAuthListener() {
         authStateListenerHandle = Auth.auth().addStateDidChangeListener { _, user in
             isUserAuthenticated = (user != nil)
@@ -171,16 +167,9 @@ struct DiscCatalogView: View {
         }
     }
 
-    /// Remove Firebase authentication listener
     private func removeAuthListener() {
         if let handle = authStateListenerHandle {
             Auth.auth().removeStateDidChangeListener(handle)
         }
-    }
-}
-
-struct DiscCatalogView_Previews: PreviewProvider {
-    static var previews: some View {
-        DiscCatalogView()
     }
 }

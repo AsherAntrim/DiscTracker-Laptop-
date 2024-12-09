@@ -2,41 +2,87 @@
 //  UserDataManager.swift
 //  DiscTracker
 //
-//  Created by Asher Antrim and Nathan Hollis on 11/22/24.
+//  Originally by Asher Antrim and Nathan Hollis on 11/22/24.
+//  Modified by OpenAI on 12/09/24.
+//
+//  This version stores and retrieves the User from Firestore rather than UserDefaults.
 //
 
 import Foundation
+import FirebaseFirestore
+import FirebaseAuth
 
-/// Manages the data operations for the User model, including saving, loading, and updating discPoints.
 class UserDataManager {
-    private let userDefaultsKey = "savedUser"
+    private let db = Firestore.firestore()
+    
+    /// Fetch user data from Firestore. If no document is found, it creates a new user document.
+    func loadUser(completion: @escaping (User?) -> Void) {
+        guard let currentUser = Auth.auth().currentUser else {
+            completion(nil)
+            return
+        }
+        
+        let userRef = db.collection("users").document(currentUser.uid)
+        userRef.getDocument { document, error in
+            if let error = error {
+                print("Error fetching user: \(error.localizedDescription)")
+                completion(nil)
+                return
+            }
 
-    /// Saves the User object to UserDefaults.
-    func saveUser(_ user: User) {
-        do {
-            let encodedData = try JSONEncoder().encode(user)
-            UserDefaults.standard.set(encodedData, forKey: userDefaultsKey)
-        } catch {
-            print("Failed to save user: \(error.localizedDescription)")
+            if let document = document, document.exists {
+                do {
+                    let user = try document.data(as: User.self)
+                    completion(user)
+                } catch {
+                    print("Failed to decode user: \(error.localizedDescription)")
+                    completion(nil)
+                }
+            } else {
+                // User document does not exist, create a default user
+                let newUser = User(
+                    id: currentUser.uid,
+                    username: currentUser.displayName ?? "DefaultUser",
+                    email: currentUser.email ?? "default@example.com",
+                    discPoints: 0
+                )
+                self.saveUser(newUser) { success in
+                    completion(success ? newUser : nil)
+                }
+            }
         }
     }
 
-    /// Loads the User object from UserDefaults.
-    func loadUser() -> User? {
-        guard let savedData = UserDefaults.standard.data(forKey: userDefaultsKey) else { return nil }
+    /// Saves the user object to Firestore.
+    func saveUser(_ user: User, completion: ((Bool) -> Void)? = nil) {
+        let userRef = db.collection("users").document(user.id)
         do {
-            return try JSONDecoder().decode(User.self, from: savedData)
+            try userRef.setData(from: user) { error in
+                if let error = error {
+                    print("Failed to save user: \(error.localizedDescription)")
+                    completion?(false)
+                } else {
+                    completion?(true)
+                }
+            }
         } catch {
-            print("Failed to load user: \(error.localizedDescription)")
-            return nil
+            print("Failed to encode user: \(error.localizedDescription)")
+            completion?(false)
         }
     }
 
-    /// Updates the user's discPoints and saves the updated user object.
-    func updateDiscPoints(for user: User, points: Int) -> User {
+    /// Updates the user's discPoints in Firestore.
+    func updateDiscPoints(for user: User, points: Int, completion: ((User?) -> Void)? = nil) {
+        let updatedPoints = max(0, user.discPoints + points)
         var updatedUser = user
-        updatedUser.discPoints += points
-        saveUser(updatedUser)
-        return updatedUser
+        updatedUser.discPoints = updatedPoints
+
+        saveUser(updatedUser) { success in
+            if success {
+                completion?(updatedUser)
+            } else {
+                completion?(nil)
+            }
+        }
     }
 }

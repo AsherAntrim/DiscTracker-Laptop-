@@ -2,77 +2,91 @@
 //  UserViewModel.swift
 //  DiscTracker
 //
-//  Created by Asher Antrim and Nathan Hollis on 11/22/24.
+//  Originally by Asher Antrim and Nathan Hollis on 11/22/24.
+//  Modified by OpenAI on 12/09/24.
+//
+//  Now uses Firestore to store discPoints instead of UserDefaults.
 //
 
 import Foundation
 import SwiftUI
+import FirebaseAuth
 
 class UserDiscViewModel: ObservableObject {
-    @Published private(set) var totalPoints: Int = 0
     @Published var user: User?
     @Published var discPoints: Int = 0
-    private let userManager = UserDataManager()
     
+    private let userManager = UserDataManager()
+
     init() {
         loadUser()
     }
-    
-    private func rewardUser(for catalogSize: Int) {
-        let milestones = [10, 25, 50, 100] // Milestones for rewards
-        let pointsReward = catalogSize * 10 // Adjust the points based on the number of cataloged discs
 
-        if let nextMilestone = milestones.first(where: { $0 == catalogSize }) {
-            print("Congratulations! You've cataloged \(nextMilestone) discs and earned \(pointsReward) points.")
-            addDiscPoints(pointsReward) // Add points for the milestone
+    func loadUser() {
+        userManager.loadUser { [weak self] loadedUser in
+            DispatchQueue.main.async {
+                if let loadedUser = loadedUser {
+                    self?.user = loadedUser
+                    self?.discPoints = loadedUser.discPoints
+                } else {
+                    self?.user = nil
+                    self?.discPoints = 0
+                }
+            }
         }
     }
 
     func addDiscPoints(_ points: Int) {
-        guard var currentUser = user else {
-            print("Error: No user object available.")
+        guard let currentUser = user else {
+            print("No user available to add disc points.")
             return
         }
-        currentUser.discPoints += points
-        discPoints = currentUser.discPoints
-        updateUser(currentUser)
+
+        userManager.updateDiscPoints(for: currentUser, points: points) { [weak self] updatedUser in
+            DispatchQueue.main.async {
+                if let updatedUser = updatedUser {
+                    self?.user = updatedUser
+                    self?.discPoints = updatedUser.discPoints
+                } else {
+                    print("Failed to update disc points in Firestore.")
+                }
+            }
+        }
     }
 
     func removeDiscPoints(_ points: Int) {
-        guard var currentUser = user else { return }
-        currentUser.discPoints = max(0, currentUser.discPoints - points) // Prevent negative points
-        discPoints = currentUser.discPoints
-        userManager.saveUser(currentUser)
-        user = currentUser
-    }
-    
-    private func updateUser(_ updatedUser: User) {
-        user = updatedUser
-        discPoints = updatedUser.discPoints
-        userManager.saveUser(updatedUser)
-    }
-
-    func loadUser(completion: ((Int) -> Void)? = nil) {
-        if let loadedUser = userManager.loadUser() {
-            user = loadedUser
-            discPoints = loadedUser.discPoints
-            completion?(loadedUser.discPoints)
-        } else {
-            createDefaultUser()
+        guard let currentUser = user else {
+            print("No user available to remove disc points.")
+            return
         }
-    }
 
-    private func createDefaultUser() {
-        let defaultUser = User(id: UUID().uuidString, username: "DefaultUser", email: "default@example.com", discPoints: 0)
-        updateUser(defaultUser)
+        userManager.updateDiscPoints(for: currentUser, points: -points) { [weak self] updatedUser in
+            DispatchQueue.main.async {
+                if let updatedUser = updatedUser {
+                    self?.user = updatedUser
+                    self?.discPoints = updatedUser.discPoints
+                } else {
+                    print("Failed to update disc points in Firestore.")
+                }
+            }
+        }
     }
 
     func resetDiscPoints() {
-        guard var currentUser = user else {
-            print("Error: No user object available.")
+        guard let currentUser = user else {
+            print("No user available to reset disc points.")
             return
         }
-        currentUser.discPoints = 0
-        updateUser(currentUser)
+
+        userManager.updateDiscPoints(for: currentUser, points: -currentUser.discPoints) { [weak self] updatedUser in
+            DispatchQueue.main.async {
+                if let updatedUser = updatedUser {
+                    self?.user = updatedUser
+                    self?.discPoints = updatedUser.discPoints
+                } else {
+                    print("Failed to reset disc points in Firestore.")
+                }
+            }
+        }
     }
 }

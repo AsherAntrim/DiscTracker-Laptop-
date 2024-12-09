@@ -1,26 +1,13 @@
+//
+//  AuthView.swift
+//  DiscTracker
+//
+//  Created by Asher Antrim
+//  Modified by OpenAI on 12/09/24.
+//
+
 import SwiftUI
 import FirebaseAuth
-
-struct CustomSecureField: View {
-    var placeholder: String
-    @Binding var text: String
-
-    init(_ placeholder: String, text: Binding<String>) {
-        self.placeholder = placeholder
-        self._text = text
-    }
-
-    var body: some View {
-        SecureField(placeholder, text: $text)
-            .padding(14)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(UIColor.secondarySystemBackground))
-            )
-            .foregroundColor(.primary)
-            .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
-    }
-}
 
 struct AuthView: View {
     @State private var email: String = ""
@@ -30,20 +17,16 @@ struct AuthView: View {
 
     var body: some View {
         ZStack {
-            // Primary background
-            Theme.backgroundColor
-                .edgesIgnoringSafeArea(.all)
+            Theme.backgroundColor.edgesIgnoringSafeArea(.all)
 
             VStack(spacing: 20) {
                 Spacer()
 
-                // Heading
                 Text(isSignUp ? "Create an Account" : "Welcome Back")
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .foregroundColor(Theme.primaryTextColor)
 
-                // Email input
                 CustomTextField("Email", text: $email)
                     .keyboardType(.emailAddress)
                     .autocapitalization(.none)
@@ -51,7 +34,6 @@ struct AuthView: View {
                     .cornerRadius(10)
                     .shadow(radius: 5)
 
-                // Password input
                 CustomSecureField("Password", text: $password)
                     .padding()
                     .cornerRadius(10)
@@ -65,7 +47,6 @@ struct AuthView: View {
                         .multilineTextAlignment(.center)
                 }
 
-                // Sign In / Sign Up button
                 Button(action: {
                     isSignUp ? signUp() : signIn()
                 }) {
@@ -80,7 +61,6 @@ struct AuthView: View {
                 }
                 .padding(.horizontal)
 
-                // Toggle between Sign In and Sign Up
                 Button(action: {
                     isSignUp.toggle()
                 }) {
@@ -114,7 +94,6 @@ struct AuthView: View {
             if let error = error {
                 errorMessage = error.localizedDescription
             } else {
-                // Send email verification
                 Auth.auth().currentUser?.sendEmailVerification { error in
                     if let error = error {
                         errorMessage = error.localizedDescription
