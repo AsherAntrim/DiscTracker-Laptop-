@@ -52,6 +52,7 @@ struct AchievementRowView: View {
                 Text(achievement.description)
                     .font(.subheadline)
                     .foregroundColor(.gray)
+                Text("Reward: \(achievement.points)")
             }
             Spacer()
 

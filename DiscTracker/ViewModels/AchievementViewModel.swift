@@ -62,6 +62,9 @@ class AchievementViewModel: ObservableObject {
         // Check disc count requirement
         if let requiredDiscCount = achievement.requiredDiscCount {
             if discCount >= requiredDiscCount {
+                if !achievement.isEarned {
+                    userDiscViewModel.addDiscPoints(achievement.points)
+                }
                 return true
             }
         }
@@ -69,6 +72,9 @@ class AchievementViewModel: ObservableObject {
         // Check disc points requirement
         if let requiredDiscPoints = achievement.requiredDiscPoints {
             if discPoints >= requiredDiscPoints {
+                if !achievement.isEarned {
+                    userDiscViewModel.addDiscPoints(achievement.points)
+                }
                 return true
             }
         }
