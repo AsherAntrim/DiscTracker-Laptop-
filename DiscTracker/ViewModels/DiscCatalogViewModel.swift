@@ -142,7 +142,6 @@ class DiscCatalogViewModel: ObservableObject {
     }
 }
 
-// MARK: - Recommendation Feature
 extension DiscCatalogViewModel {
     func recommendDisc(stability: String, distance: Int) -> Disc? {
         let filteredByStability: [Disc]

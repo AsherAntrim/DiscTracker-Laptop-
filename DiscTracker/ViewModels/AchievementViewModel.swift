@@ -15,26 +15,23 @@ class AchievementViewModel: ObservableObject {
         
         // Wait for user to load before loading achievements
         userDiscViewModel.$user
-            .compactMap { $0 } // Only proceed when user is not nil
-            .first()           // Only handle the first time the user loads
-            .sink { [weak self] _ in
+            .compactMap { $0 } // Proceed only when user is non-nil
+            .sink { [weak self] user in
+                // Once user is loaded, load achievements
                 self?.loadAchievements()
-                self?.initialUserLoadCompleted = true
             }
             .store(in: &cancellables)
-
-        // Check achievements only when conditions change:
-        // After initial load is done
+        
+        // Check achievements only when conditions change
         discCatalogViewModel.$discCount
-            .drop(untilOutputFrom: userDiscViewModel.$user.compactMap { $0 }.first())
-            .sink { [weak self] _ in self?.checkAndUpdateAchievementsIfLoaded() }
+            .sink { [weak self] _ in self?.checkAndUpdateAchievements() }
             .store(in: &cancellables)
         
         discCatalogViewModel.$favoriteCount
-            .drop(untilOutputFrom: userDiscViewModel.$user.compactMap { $0 }.first())
-            .sink { [weak self] _ in self?.checkAndUpdateAchievementsIfLoaded() }
+            .sink { [weak self] _ in self?.checkAndUpdateAchievements() }
             .store(in: &cancellables)
     }
+
     
     private func checkAndUpdateAchievementsIfLoaded() {
         guard initialUserLoadCompleted else { return }
@@ -42,45 +39,56 @@ class AchievementViewModel: ObservableObject {
     }
     
     func loadAchievements() {
-        let baseAchievements = AchievementDataManager.shared.achievements
-        let earnedAchievementIDs = (userDiscViewModel.user?.earnedAchievements ?? []).filter { !$0.isEmpty }
+        guard let user = userDiscViewModel.user else {
+            // Wait until the user is fully loaded
+            print("User not loaded. Achievements cannot be loaded yet.")
+            return
+        }
         
+        // Get base achievements and user's earned achievements
+        let baseAchievements = AchievementDataManager.shared.achievements
+        let earnedAchievementIDs = Set(user.earnedAchievements)
+        
+        // Map achievements and set `isEarned` based on user's earnedAchievements
         achievements = baseAchievements.map { achievement in
             var updated = achievement
-            if earnedAchievementIDs.contains(updated.id.uuidString) {
+            if earnedAchievementIDs.contains(achievement.id.uuidString) {
                 updated.isEarned = true
             }
             return updated
         }
-        
-        // Optionally call check once after load, if needed:
-        checkAndUpdateAchievements()
     }
+
     
     private func checkAndUpdateAchievements() {
         guard let user = userDiscViewModel.user else {
+            print("User not loaded. Cannot check achievements.")
             return
         }
         
         var newlyEarned: [Achievement] = []
-        // Check which are newly earned
+        
         for i in 0..<achievements.count {
             let achievement = achievements[i]
-            if !achievement.isEarned && isAchievementEarned(achievement) {
+            // Skip already earned achievements
+            if achievement.isEarned { continue }
+            
+            // Check if the achievement is now earned
+            if isAchievementEarned(achievement) {
                 achievements[i].isEarned = true
                 newlyEarned.append(achievements[i])
             }
         }
-
-        // If newly earned, first save them, then award points:
+        
+        // If new achievements are earned, save and award points
         if !newlyEarned.isEmpty {
             saveEarnedAchievements(newlyEarned.map { $0.id }) { [weak self] success in
                 guard success, let self = self else { return }
-                // Now award points (only once)
                 self.awardAchievements(newlyEarned)
             }
         }
     }
+
     
     private func isAchievementEarned(_ achievement: Achievement) -> Bool {
         let discCount = discCatalogViewModel.discCount
