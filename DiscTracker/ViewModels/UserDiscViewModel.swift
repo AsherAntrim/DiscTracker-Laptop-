@@ -71,6 +71,20 @@ class UserDiscViewModel: ObservableObject {
             }
         }
     }
+    
+    func saveUserToFirestore(completion: ((Bool) -> Void)? = nil) {
+        guard let currentUser = user else {
+            completion?(false)
+            return
+        }
+        userManager.saveUser(currentUser) { success in
+            if !success {
+                print("Failed to save user to Firestore.")
+            }
+            completion?(success)
+        }
+    }
+
 
     func resetDiscPoints() {
         guard let currentUser = user else {

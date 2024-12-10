@@ -7,41 +7,43 @@ class AchievementViewModel: ObservableObject {
     private var userDiscViewModel: UserDiscViewModel
     private var discCatalogViewModel: DiscCatalogViewModel
     private var cancellables: Set<AnyCancellable> = []
-    
-    private let earnedAchievementsKey = "earnedAchievementsIDs"
-    private var achievementsPendingPoints: [Achievement] = []
+    private var initialUserLoadCompleted = false
     
     init(userDiscViewModel: UserDiscViewModel, discCatalogViewModel: DiscCatalogViewModel) {
         self.userDiscViewModel = userDiscViewModel
         self.discCatalogViewModel = discCatalogViewModel
-        loadAchievements()
         
-        userDiscViewModel.$discPoints
-            .sink { [weak self] _ in self?.checkAndUpdateAchievements() }
+        // Wait for user to load before loading achievements
+        userDiscViewModel.$user
+            .compactMap { $0 } // Only proceed when user is not nil
+            .first()           // Only handle the first time the user loads
+            .sink { [weak self] _ in
+                self?.loadAchievements()
+                self?.initialUserLoadCompleted = true
+            }
             .store(in: &cancellables)
-        
+
+        // Check achievements only when conditions change:
+        // After initial load is done
         discCatalogViewModel.$discCount
-            .sink { [weak self] _ in self?.checkAndUpdateAchievements() }
+            .drop(untilOutputFrom: userDiscViewModel.$user.compactMap { $0 }.first())
+            .sink { [weak self] _ in self?.checkAndUpdateAchievementsIfLoaded() }
             .store(in: &cancellables)
         
         discCatalogViewModel.$favoriteCount
-            .sink { [weak self] _ in self?.checkAndUpdateAchievements() }
+            .drop(untilOutputFrom: userDiscViewModel.$user.compactMap { $0 }.first())
+            .sink { [weak self] _ in self?.checkAndUpdateAchievementsIfLoaded() }
             .store(in: &cancellables)
-        
-        userDiscViewModel.$user
-            .sink { [weak self] user in
-                guard let self = self else { return }
-                if user != nil {
-                    // User just loaded, award any pending achievements
-                    self.awardPendingAchievements()
-                }
-            }
-            .store(in: &cancellables)
+    }
+    
+    private func checkAndUpdateAchievementsIfLoaded() {
+        guard initialUserLoadCompleted else { return }
+        checkAndUpdateAchievements()
     }
     
     func loadAchievements() {
         let baseAchievements = AchievementDataManager.shared.achievements
-        let earnedAchievementIDs = loadEarnedAchievements()
+        let earnedAchievementIDs = (userDiscViewModel.user?.earnedAchievements ?? []).filter { !$0.isEmpty }
         
         achievements = baseAchievements.map { achievement in
             var updated = achievement
@@ -51,68 +53,40 @@ class AchievementViewModel: ObservableObject {
             return updated
         }
         
+        // Optionally call check once after load, if needed:
         checkAndUpdateAchievements()
     }
     
     private func checkAndUpdateAchievements() {
-        var updatedAchievements = achievements
-        var newlyEarnedAchievements: [Achievement] = []
+        guard let user = userDiscViewModel.user else {
+            return
+        }
         
-        for index in 0..<updatedAchievements.count {
-            let achievement = updatedAchievements[index]
-            let currentlyEarned = achievement.isEarned
-            let newEarnedStatus = isAchievementEarned(
-                achievement,
-                discCount: discCatalogViewModel.discCount,
-                discPoints: userDiscViewModel.discPoints,
-                favorites: discCatalogViewModel.favoriteCount
-            )
-            
-            if newEarnedStatus && !currentlyEarned {
-                updatedAchievements[index].isEarned = true
-                saveEarnedAchievement(id: achievement.id)
-                newlyEarnedAchievements.append(updatedAchievements[index])
+        var newlyEarned: [Achievement] = []
+        // Check which are newly earned
+        for i in 0..<achievements.count {
+            let achievement = achievements[i]
+            if !achievement.isEarned && isAchievementEarned(achievement) {
+                achievements[i].isEarned = true
+                newlyEarned.append(achievements[i])
             }
         }
-        
-        achievements = updatedAchievements
-        
-        // Attempt to award points for newly earned achievements
-        awardAchievements(newlyEarnedAchievements)
-    }
-    
-    private func awardAchievements(_ achievementsToAward: [Achievement]) {
-        // If the user is not loaded yet, queue them
-        guard let _ = userDiscViewModel.user else {
-            achievementsPendingPoints.append(contentsOf: achievementsToAward)
-            return
-        }
-        
-        // User is loaded, award points immediately
-        for achievement in achievementsToAward {
-            userDiscViewModel.addDiscPoints(achievement.points)
-        }
-        
-        // If any achievements were pending, try awarding them now
-        if !achievementsPendingPoints.isEmpty {
-            awardPendingAchievements()
+
+        // If newly earned, first save them, then award points:
+        if !newlyEarned.isEmpty {
+            saveEarnedAchievements(newlyEarned.map { $0.id }) { [weak self] success in
+                guard success, let self = self else { return }
+                // Now award points (only once)
+                self.awardAchievements(newlyEarned)
+            }
         }
     }
     
-    private func awardPendingAchievements() {
-        guard !achievementsPendingPoints.isEmpty else { return }
-        guard let _ = userDiscViewModel.user else {
-            return
-        }
+    private func isAchievementEarned(_ achievement: Achievement) -> Bool {
+        let discCount = discCatalogViewModel.discCount
+        let discPoints = userDiscViewModel.discPoints
+        let favorites = discCatalogViewModel.favoriteCount
         
-        for achievement in achievementsPendingPoints {
-            userDiscViewModel.addDiscPoints(achievement.points)
-        }
-        
-        achievementsPendingPoints.removeAll()
-    }
-    
-    private func isAchievementEarned(_ achievement: Achievement, discCount: Int, discPoints: Int, favorites: Int) -> Bool {
         if let requiredDiscCount = achievement.requiredDiscCount, discCount >= requiredDiscCount {
             return true
         }
@@ -125,15 +99,27 @@ class AchievementViewModel: ObservableObject {
         return false
     }
     
-    private func loadEarnedAchievements() -> [String] {
-        UserDefaults.standard.stringArray(forKey: earnedAchievementsKey) ?? []
-    }
-    
-    private func saveEarnedAchievement(id: UUID) {
-        var earnedIDs = loadEarnedAchievements()
-        if !earnedIDs.contains(id.uuidString) {
-            earnedIDs.append(id.uuidString)
-            UserDefaults.standard.set(earnedIDs, forKey: earnedAchievementsKey)
+    private func saveEarnedAchievements(_ newAchievementIDs: [UUID], completion: @escaping (Bool) -> Void) {
+        guard var user = userDiscViewModel.user else {
+            completion(false)
+            return
         }
+
+        let newAchievementIDStrings = newAchievementIDs.map { $0.uuidString }
+        user.earnedAchievements.append(contentsOf: newAchievementIDStrings)
+        user.earnedAchievements = Array(Set(user.earnedAchievements))
+        
+        userDiscViewModel.user = user
+        userDiscViewModel.saveUserToFirestore { success in
+            completion(success)
+        }
+    }
+
+    private func awardAchievements(_ achievementsToAward: [Achievement]) {
+        // Award points for newly earned achievements once
+        let totalPoints = achievementsToAward.reduce(0) { $0 + $1.points }
+        userDiscViewModel.addDiscPoints(totalPoints)
+        // No further checks here to prevent loops
+        // Achievements won't re-trigger since they're now marked as earned
     }
 }
