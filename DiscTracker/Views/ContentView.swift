@@ -64,6 +64,7 @@ struct DiscCatalogView: View {
         NavigationView {
             ZStack(alignment: .bottomTrailing) {
                 VStack {
+                    Spacer()
                     searchBar
                     if discCatalogViewModel.discs.isEmpty {
                         Spacer()
