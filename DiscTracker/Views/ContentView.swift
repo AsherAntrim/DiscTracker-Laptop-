@@ -3,7 +3,8 @@
 //  DiscTracker
 //
 //  Created by Asher Antrim on 9/11/24.
-//  Modified by OpenAI on 12/09/24.
+//  Modified to support disc deletion via swipe-to-delete on 12/12/24.
+//  Updated by OpenAI to show user-facing alert on error.
 //
 
 import SwiftUI
@@ -18,6 +19,7 @@ struct DiscCatalogView: View {
     @State private var isUserAuthenticated = false
     @State private var authStateListenerHandle: AuthStateDidChangeListenerHandle?
     @State private var showAlert = false
+    @State private var currentErrorMessage: String?
 
     var body: some View {
         Group {
@@ -32,6 +34,13 @@ struct DiscCatalogView: View {
         }
         .onDisappear {
             removeAuthListener()
+        }
+        .alert(isPresented: $showAlert) {
+            Alert(
+                title: Text("Error"),
+                message: Text(currentErrorMessage ?? "Error Loading Data"),
+                dismissButton: .default(Text("OK"))
+            )
         }
     }
 
@@ -64,50 +73,45 @@ struct DiscCatalogView: View {
         NavigationView {
             ZStack(alignment: .bottomTrailing) {
                 VStack {
-                    Spacer()
                     searchBar
+
                     if discCatalogViewModel.discs.isEmpty {
                         Spacer()
                         Text("No discs available.")
                             .foregroundColor(Theme.secondaryTextColor)
                         Spacer()
                     } else {
-                        ScrollView {
-                            VStack(spacing: 10) {
-                                ForEach(filteredDiscs, id: \.id) { disc in
-                                    NavigationLink(
-                                        destination: DiscDetailView(
-                                            userDiscViewModel: userDiscViewModel,
-                                            discCatalogViewModel: discCatalogViewModel,
-                                            disc: binding(for: disc)
-                                        )
-                                    ) {
-                                        HStack {
-                                            VStack(alignment: .leading, spacing: 4) {
-                                                Text(disc.name)
-                                                    .font(.headline)
-                                                    .foregroundColor(.primary)
-                                                Text("\(disc.type) | \(disc.plasticType)")
-                                                    .font(.subheadline)
-                                                    .foregroundColor(.secondary)
-                                            }
-                                            Spacer()
-                                            if disc.favorite {
-                                                Image(systemName: "heart.fill").foregroundColor(.red)
-                                            }
-                                            Image(systemName: "chevron.right")
-                                                .foregroundColor(.gray)
+                        List {
+                            ForEach(filteredDiscs, id: \.id) { disc in
+                                NavigationLink(
+                                    destination: DiscDetailView(
+                                        userDiscViewModel: userDiscViewModel,
+                                        discCatalogViewModel: discCatalogViewModel,
+                                        disc: binding(for: disc)
+                                    )
+                                ) {
+                                    HStack {
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text(disc.name)
+                                                .font(.headline)
+                                                .foregroundColor(.primary)
+                                            Text("\(disc.type) | \(disc.plasticType)")
+                                                .font(.subheadline)
+                                                .foregroundColor(.secondary)
                                         }
-                                        .padding()
-                                        .background(Color(UIColor.secondarySystemBackground))
-                                        .cornerRadius(10)
-                                        .shadow(radius: 1)
+                                        Spacer()
+                                        if disc.favorite {
+                                            Image(systemName: "heart.fill").foregroundColor(.red)
+                                        }
+                                        Image(systemName: "chevron.right")
+                                            .foregroundColor(.gray)
                                     }
-                                    .padding(.horizontal)
+                                    .padding(.vertical, 8)
                                 }
                             }
-                            .padding(.top)
+                            .onDelete(perform: deleteDisc)
                         }
+                        .listStyle(InsetGroupedListStyle())
                     }
                 }
                 .background(Theme.backgroundColor)
@@ -123,7 +127,7 @@ struct DiscCatalogView: View {
                 }
                 .padding()
                 .sheet(isPresented: $showAddDiscSheet) {
-                    AddDiscView(discCatalogViewModel: discCatalogViewModel, showAlert: $showAlert)
+                    AddDiscView(discCatalogViewModel: discCatalogViewModel, showAlert: .constant(false))
                 }
             }
             .navigationTitle("Disc Catalog")
@@ -156,6 +160,10 @@ struct DiscCatalogView: View {
             fatalError("Disc not found in the array")
         }
         return $discCatalogViewModel.discs[discIndex]
+    }
+
+    private func deleteDisc(at offsets: IndexSet) {
+        discCatalogViewModel.removeDisc(at: offsets)
     }
 
     private func setupAuthListener() {

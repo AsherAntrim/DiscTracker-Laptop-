@@ -16,6 +16,9 @@ class DiscCatalogViewModel: ObservableObject {
     @Published var favoriteCount: Int = 0
     @Published var sortType: SortType = .name
     
+    // Added for user-facing error messages
+    @Published var errorMessage: String? = nil
+    
     private let db = Firestore.firestore()
     private let userDiscViewModel = UserDiscViewModel()
 
@@ -48,23 +51,29 @@ class DiscCatalogViewModel: ObservableObject {
         do {
             let encodedDisc = try JSONEncoder().encode(disc)
             if let jsonData = try JSONSerialization.jsonObject(with: encodedDisc) as? [String: Any] {
-                userDiscsRef.document(disc.id.uuidString).setData(jsonData) { error in
+                userDiscsRef.document(disc.id.uuidString).setData(jsonData) { [weak self] error in
                     if let error = error {
-                        print("Error saving disc to Firestore: \(error.localizedDescription)")
+                        DispatchQueue.main.async {
+                            self?.errorMessage = "Error saving disc: \(error.localizedDescription)"
+                        }
                     }
                 }
             }
         } catch {
-            print("Failed to encode disc: \(error.localizedDescription)")
+            DispatchQueue.main.async {
+                self.errorMessage = "Failed to encode disc: \(error.localizedDescription)"
+            }
         }
     }
 
     func loadDiscs() {
         guard let userId = Auth.auth().currentUser?.uid else { return }
         let userDiscsRef = db.collection("users").document(userId).collection("discs")
-        userDiscsRef.getDocuments { snapshot, error in
+        userDiscsRef.getDocuments { [weak self] snapshot, error in
             if let error = error {
-                print("Failed to load discs from Firestore: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    self?.errorMessage = "Failed to load discs: \(error.localizedDescription)"
+                }
                 return
             }
 
@@ -75,14 +84,15 @@ class DiscCatalogViewModel: ObservableObject {
                     let disc = try JSONDecoder().decode(Disc.self, from: jsonData)
                     loadedDiscs.append(disc)
                 } catch {
+                    // Non-critical error, just skip invalid discs.
                     print("Failed to decode disc: \(error.localizedDescription)")
                 }
             }
 
             DispatchQueue.main.async {
-                self.discs = loadedDiscs
-                self.countDiscs()
-                self.countFavorites()
+                self?.discs = loadedDiscs
+                self?.countDiscs()
+                self?.countFavorites()
             }
         }
     }
@@ -103,23 +113,29 @@ class DiscCatalogViewModel: ObservableObject {
         do {
             let encoded = try JSONEncoder().encode(disc)
             if let jsonData = try JSONSerialization.jsonObject(with: encoded) as? [String: Any] {
-                userDiscsRef.document(disc.id.uuidString).setData(jsonData) { error in
+                userDiscsRef.document(disc.id.uuidString).setData(jsonData) { [weak self] error in
                     if let error = error {
-                        print("Error updating disc in Firestore: \(error.localizedDescription)")
+                        DispatchQueue.main.async {
+                            self?.errorMessage = "Error updating disc: \(error.localizedDescription)"
+                        }
                     }
                 }
             }
         } catch {
-            print("Failed to encode updated disc: \(error.localizedDescription)")
+            DispatchQueue.main.async {
+                self.errorMessage = "Failed to encode updated disc: \(error.localizedDescription)"
+            }
         }
         countFavorites()
     }
 
     private func deleteDiscFromFirestore(disc: Disc, userId: String) {
         let userDiscsRef = db.collection("users").document(userId).collection("discs")
-        userDiscsRef.document(disc.id.uuidString).delete { error in
+        userDiscsRef.document(disc.id.uuidString).delete { [weak self] error in
             if let error = error {
-                print("Error deleting disc: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    self?.errorMessage = "Error deleting disc: \(error.localizedDescription)"
+                }
             }
         }
     }
