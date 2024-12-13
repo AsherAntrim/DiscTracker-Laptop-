@@ -33,6 +33,7 @@ struct AchievementsView: View {
             .scrollContentBackground(.hidden)
             .background(Theme.backgroundColor.edgesIgnoringSafeArea(.all))
             .navigationTitle("Achievements")
+            .padding()
         }
     }
 }

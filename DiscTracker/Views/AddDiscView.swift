@@ -32,6 +32,7 @@ struct AddDiscView: View {
                 Text("Add a New Disc")
                     .font(.largeTitle)
                     .fontWeight(.bold)
+                    // Ensure primary text color for adaptability
                     .foregroundColor(Theme.primaryTextColor)
                     .padding(.top, 40)
 
@@ -48,12 +49,16 @@ struct AddDiscView: View {
                         Picker("Select Condition", selection: $selectedCondition) {
                             ForEach(conditions, id: \.self) { condition in
                                 Text(condition)
+                                    .foregroundColor(Theme.primaryTextColor)
                                     .tag(condition)
                             }
                         }
                         .pickerStyle(MenuPickerStyle())
                         .padding(10)
-                        .background(RoundedRectangle(cornerRadius: 12).fill(Color(UIColor.secondarySystemBackground)))
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color(UIColor.secondarySystemBackground))
+                        )
                         .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
                     }
 
@@ -76,14 +81,16 @@ struct AddDiscView: View {
                             .padding()
                             .frame(maxWidth: .infinity)
                             .background(
-                                (name.isEmpty || type.isEmpty || plasticType.isEmpty || speedText.isEmpty || glideText.isEmpty || turnText.isEmpty || fadeText.isEmpty)
+                                (name.isEmpty || type.isEmpty || plasticType.isEmpty ||
+                                 speedText.isEmpty || glideText.isEmpty || turnText.isEmpty || fadeText.isEmpty)
                                 ? Color.gray
                                 : Theme.highlightColor
                             )
                             .cornerRadius(12)
                             .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 4)
                     }
-                    .disabled(name.isEmpty || type.isEmpty || plasticType.isEmpty || speedText.isEmpty || glideText.isEmpty || turnText.isEmpty || fadeText.isEmpty)
+                    .disabled(name.isEmpty || type.isEmpty || plasticType.isEmpty ||
+                              speedText.isEmpty || glideText.isEmpty || turnText.isEmpty || fadeText.isEmpty)
 
                     Button(action: { presentationMode.wrappedValue.dismiss() }) {
                         Text("Cancel")
@@ -124,5 +131,3 @@ struct AddDiscView: View {
         presentationMode.wrappedValue.dismiss()
     }
 }
-
-

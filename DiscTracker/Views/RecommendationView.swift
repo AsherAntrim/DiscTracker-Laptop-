@@ -44,7 +44,7 @@ struct RecommendationView: View {
                         Picker("Stability", selection: $selectedStabilityIndex) {
                             ForEach(0..<stabilityOptions.count, id: \.self) { index in
                                 Text(stabilityOptions[index])
-                                    .foregroundColor(.white)
+                                    .foregroundColor(Theme.primaryTextColor)
                                     .tag(index)
                             }
                         }
@@ -62,7 +62,7 @@ struct RecommendationView: View {
                         Picker("Distance", selection: $selectedDistanceIndex) {
                             ForEach(0..<distanceOptions.count, id: \.self) { index in
                                 Text("\(distanceOptions[index])")
-                                    .foregroundColor(.white)
+                                    .foregroundColor(Theme.primaryTextColor)
                                     .tag(index)
                             }
                         }
@@ -78,7 +78,7 @@ struct RecommendationView: View {
                 Button(action: getRecommendation) {
                     Text("Get Recommendation")
                         .font(.headline)
-                        .foregroundColor(.white)
+                        .foregroundColor(Theme.primaryTextColor)
                         .padding()
                         .frame(maxWidth: .infinity)
                         .background(Theme.highlightColor)

@@ -60,7 +60,7 @@ struct AccountView: View {
             Button(action: signOut) {
                 Text("Sign Out")
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundColor(Theme.primaryTextColor)
                     .padding()
                     .frame(maxWidth: .infinity)
                     .background(Color.red)
@@ -75,7 +75,7 @@ struct AccountView: View {
             }) {
                 Text("Delete Account")
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundColor(Theme.primaryTextColor)
                     .padding()
                     .frame(maxWidth: .infinity)
                     .background(Color.red.opacity(0.8))

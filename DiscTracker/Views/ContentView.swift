@@ -74,7 +74,6 @@ struct DiscCatalogView: View {
             ZStack(alignment: .bottomTrailing) {
                 VStack {
                     searchBar
-
                     if discCatalogViewModel.discs.isEmpty {
                         Spacer()
                         Text("No discs available.")
@@ -141,6 +140,7 @@ struct DiscCatalogView: View {
             .background(Theme.accentColor.opacity(0.2))
             .cornerRadius(8)
             .padding(.horizontal)
+            .padding(.top, 10)
     }
 
     private var filteredDiscs: [Disc] {

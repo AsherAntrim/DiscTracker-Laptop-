@@ -39,7 +39,6 @@ class DiscCatalogViewModel: ObservableObject {
             fade: fade
         )
         discs.append(newDisc)
-        userDiscViewModel.addDiscPoints(10)
         
         countDiscs()
         countFavorites()

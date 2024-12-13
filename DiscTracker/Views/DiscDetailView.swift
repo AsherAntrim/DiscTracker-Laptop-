@@ -83,17 +83,17 @@ struct DiscInfoRow: View {
         HStack {
             Text(title)
                 .font(.headline)
-                .foregroundColor(.primary) // Use primary color for readability
+                .foregroundColor(.primary) // dynamic text color
             Spacer()
             Text(value)
                 .font(.body)
-                .foregroundColor(.primary) // Use primary color for readability
+                .foregroundColor(.primary) // dynamic text color
         }
         .padding(.vertical, 5)
         .padding(.horizontal)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white)
+                .fill(Color(UIColor.secondarySystemBackground)) // dynamic background
                 .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 4)
         )
     }
@@ -107,7 +107,7 @@ struct ToggleOptionRow: View {
         HStack {
             Text(title)
                 .font(.headline)
-                .foregroundColor(.primary) // Use primary color for readability
+                .foregroundColor(.primary) // dynamic text color
             Spacer()
             Toggle("", isOn: $isOn)
                 .labelsHidden()
@@ -116,7 +116,7 @@ struct ToggleOptionRow: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white)
+                .fill(Color(UIColor.secondarySystemBackground)) // dynamic background
                 .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 4)
         )
     }
